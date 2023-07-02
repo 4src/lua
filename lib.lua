@@ -64,9 +64,13 @@ function lib.map(t, fun) return lib.kap(t, function(_,x) return fun(x) end) end
 
 -- ### Lists
 
+-- Return a list with numeric keys.
+function lib.list(t)
+  return lib.map(t,lib.same) end
+
 -- Sorts `t` using `fun`, returns `t`. 
 function lib.sort(t,fun) 
-  if #t==0 then t = lib.map(t,lib.same) end
+  if #t==0 then t = lib.list(t) end
   if #t==0 then return {} end
   table.sort(t,fun)
   return t end
