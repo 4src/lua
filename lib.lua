@@ -103,8 +103,8 @@ function lib.slice(t1, nGo, nStop, nInc,    t2)
 function lib.o(t,     _fun,pre) 
   if type(t) ~= "table" then return tostring(t) end
   _fun = function(k,v) return lib.fmt(":%s %s",k,lib.o(v)) end 
-  pre  = t.a or ""
-  return pre.."{"..table.concat(#t>0 and lib.map(t,lib.o) or lib.sort(lib.kap(t,_fun))," ").."}" end
+  t = #t>0 and lib.map(t,lib.o) or lib.sort(lib.kap(t,_fun))
+  return (t.a or "").."{"..table.concat(t," ").."}" end
 
 -- Print `t` (recursively) then return it.
 function lib.oo(t) print(lib.o(t)); return t end

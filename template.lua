@@ -22,6 +22,5 @@ function egs.the() oo(the) end
 
 -------------------------------------------------------------------------------
 -- ## Start-up
-if   not pcall(debug.getlocal,4,1) 
-then the=l.cli(the, help); l.run(the,egs) end
-return {COL=COL, COLS=COLS, DATA=DATA, NUM=NUM, SYM=SYM}
+if not pcall(debug.getlocal,4,1) then the=l.cli(the, help); l.run(the,egs) end
+return {} -- list of classes
