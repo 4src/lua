@@ -165,24 +165,22 @@ function lib.obj(s,    t)
 -- then run all (printing "FAIL" or "PASS" as you go).  Check for stray i
 -- globals.  Return to the operating system the number of failures 
 -- (so zero means "everything is ok").
-function lib.run(settings,egs,     fails,old,report,good,bad,veryBad,reset)
+function lib.run(settings,egs,     fails,old,report,good,bad,missing,reset)
   fails, old = 0, {}
   for k,v in pairs(settings) do old[k]=v end
-  report=  function()       print(lib.fmt("🔆 failure(s) = %s",fails)) end
-  good=    function(s)      print(lib.fmt("✅ PASS %s",s)) end 
-  bad=     function(s,msg)  print(lib.fmt("❌ FAIL %s %s",s,msg or "")) 
+  report=  function()       print("🔆 failure(s) = ",fails) end
+  good=    function(s)      print("✅ PASS ",s) end 
+  bad=     function(s,msg)  print("❌ FAIL : ",s,msg or "") 
                             fails = fails + 1 end
-  veryBad= function(s,msg)  print(debug.traceback()) 
-                            bad(s,msg) end
+  missing= function(s)      print("?? unknown ",s) end
   reset=   function()       for k,v in pairs(old) do settings[k]=v end  
                             Seed = settings.seed
                             math.randomseed(Seed) end
   for _,s in pairs(egs.all) do
-    local fun = egs[s] or print("-- E> missing ",s) 
-    if fun and settings.go == s or settings.go == "all" then
+    if settings.go == s or settings.go == "all" then
       reset()
-      local ok,msg = pcall(fun)
-      if not ok then veryBad(s,msg) elseif val==false then bad(s) else good(s) end end end
+      local ok,msg = pcall(egs[s] or function () missing(s) end)
+      if not ok then bad(s,msg) elseif val==false then bad(s) else good(s) end end end
   if settings.go == "all" then report() end
   lib.rogues()
   os.exit(fails) end
