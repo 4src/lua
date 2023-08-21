@@ -54,7 +54,7 @@ function SYM.new(i,at,txt)
 function SYM.mid(i) return mode(i.counts) end
 function SYM.div(i) return ent(i.counts) end
 
-function SYM.add(i,x):
+function SYM.add(i,x)
   if x~="?" then
     i.n = i.n + 1
     i.has[x] = 1 + (i.has[x] or 0)
@@ -66,16 +66,32 @@ function adds(x,t)
   for _,v in pairs(t) do x:add(v) end; return x end
 
 function ent(t,     n,e)
-  n=0; for _,v in pairs(t) do n=n+v end
-  e=0; for _,v in pairs(t) do e=e-v/n*math.log(v/n,2)
+  n=0; for _,v in pairs(t) do if v>0 then n=n+v end end
+  e=0; for _,v in pairs(t) do if v>0 then e=e-v/n*math.log(v/n,2) end end
   return e end
 
-function mode(t,    k,v)
-  n,it=0,nil; for k,v in pairs(t) do if v>n then it,n = k,v end end
-  return it end
-  
----------------------------------------------
+function mode(t,    x,n)
+  x,n=nil,0; for k,v in pairs(t) do if v>n then x,n = k,v end end
+  return x end
+----------------------------------------------
+function COLS.new(i,t)
+   i.x, i.y, i.all, i.names = {}, {}, {}, t
+   for at,txt in pairs(t) do
+      col = push(i.all, txt:find"^[A-Z]" and NUM(at,txt) or SYM(at,txt))
+      if not col.name:find"X$" then
+        push(col.name:find"[+-]$" and i.y or i.x, col) end end end 
+
+function COLS.add(i,row)
+  for _,cols in pairs{i.x, i.y} do
+    for _,col in pairs(cols) do
+      col.add(row.cells[col.at]) end end end
+----------------------------------------------
+function TBL.new(i  ,src)
+  if    type(src)=="string" then csv(src,function(row) i:add(row) end) 
+  else for _,row in pairs(src or {}) do                i:add(row) end end end 
+
 local egs={all={"the"}}
+
 function egs.the() oo(the) end
 ---------------------------------------------
 l.go(help,the,egs)
