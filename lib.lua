@@ -168,7 +168,7 @@ function lib.obj(s,    t)
 function lib.run(settings,egs,     fails,old,report,good,bad,missing,reset)
   fails, old = 0, {}
   for k,v in pairs(settings) do old[k]=v end
-  report=  function()       print("🔆 failure(s) = ",fails) end
+  report=  function()       print("🔆 fails=",fails) end
   good=    function(s)      print("✅ PASS ",s) end 
   bad=     function(s,msg)  print("❌ FAIL : ",s,msg or "") 
                             fails = fails + 1 end
@@ -184,5 +184,10 @@ function lib.run(settings,egs,     fails,old,report,good,bad,missing,reset)
   if settings.go == "all" then report() end
   lib.rogues()
   os.exit(fails) end
+
+function lib.go(help,the,egs)
+  if not pcall(debug.getlocal,5,1) then 
+     the=lib.cli(the, help) 
+     lib.run(the,egs) end end
 
 return lib
