@@ -69,11 +69,16 @@ function lib.list(t)
   return lib.map(t,lib.same) end
 
 -- Sorts `t` using `fun`, returns `t`. 
-function lib.sort(t,fun) 
-  if #t==0 then t = lib.list(t) end
-  if #t==0 then return {} end
+function lib.sorted(t,fun) 
   table.sort(t,fun)
   return t end
+
+-- Sorts `t` using the Schwartzian transform.
+function lib.sortid(t,fun,    u) 
+  u={}; table.sort(t, function(a,b) if u[a.id] == nil then u[a.id] = fun(a) end
+                                    if u[b.id] == nil then u[b.id] = fun(b) end
+                                    return u[a.id] < u[b.id] end)
+  return t,u end
 
 -- Return a function that sorts ascending on slot `x`.
 function lib.lt(x) return function(t1,t2) return t1[x] < t2[x] end end
@@ -112,6 +117,10 @@ function lib.o(t,     _fun,pre)
 
 -- Print `t` (recursively) then return it.
 function lib.oo(t) print(lib.o(t)); return t end
+
+function lib.ooo(x,  decs)
+  return  type(x)=="function" and  "FUN()" or (
+          decs and type(x) =="number" and lib.rnd(x,decs) or x) end
 
 -- Convert `s` into an integer, a float, a bool, or a string (as appropriate). Return the result.
 function lib.coerce(s,    _fun)
@@ -152,12 +161,14 @@ function lib.settings(s,       t)
 -- ### Klasses
 
 -- Create a klass and a constructor and a print method
+local id=0
 function lib.obj(s,    t) 
   t = {__tostring=lib.o}
   t.__index = t
   return setmetatable(t, {__call=function(_,...) 
-    local self=setmetatable({a=s},t); 
-    return setmetatable(t.new(self,...) or self,t) end}) end
+    id = id + 1
+    local self=setmetatable({a=s,id=id},t); 
+    return setmetatable(t.init(self,...) or self,t) end}) end
 
 -- ### Test Engine
 
