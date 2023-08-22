@@ -75,10 +75,11 @@ function lib.sorted(t,fun)
 
 -- Sorts `t` using the Schwartzian transform.
 function lib.sortid(t,fun,    u) 
-  u={}; table.sort(t, function(a,b) if u[a.id] == nil then u[a.id] = fun(a) end
+  u={}; table.sort(t, function(a,b)-- print(a.id,b.id); 
+                                    if u[a.id] == nil then u[a.id] = fun(a) end
                                     if u[b.id] == nil then u[b.id] = fun(b) end
                                     return u[a.id] < u[b.id] end)
-  return t,u end
+  return t end
 
 -- Return a function that sorts ascending on slot `x`.
 function lib.lt(x) return function(t1,t2) return t1[x] < t2[x] end end
@@ -106,13 +107,14 @@ function lib.slice(t1, nGo, nStop, nInc,    t2)
   for i=(nGo or 1)//1,(nStop or #t1)//1,(nInc or 1)//1 do t2[1+#t2]=t1[i] end
   return t2 end
 
+function lib.per(a,p) return a[p*#a//1] end
 -- ### Strings
 
 -- Return a string  showing `t`'s contents (recursively), sorting on the keys.
 function lib.o(t,     _fun,pre) 
   if type(t) ~= "table" then return tostring(t) end
-  _fun = function(k,v) return lib.fmt(":%s %s",k,lib.o(v)) end 
-  t = #t>0 and lib.map(t,lib.o) or lib.sort(lib.kap(t,_fun))
+  _fun = function(k,v) if k ~="^_" then return lib.fmt(":%s %s",k,lib.o(v)) end  end
+  t = #t>0 and lib.map(t,lib.o) or lib.sorted(lib.kap(t,_fun))
   return (t.a or "").."{"..table.concat(t," ").."}" end
 
 -- Print `t` (recursively) then return it.
@@ -163,9 +165,9 @@ function lib.settings(s,       t)
 -- Create a klass and a constructor and a print method
 local id=0
 function lib.obj(s,    t) 
-  t = {__tostring=lib.o}
+  t = {}
   t.__index = t
-  return setmetatable(t, {__call=function(_,...) 
+  return setmetatable(t, {__tostring=lib.o, __call=function(_,...) 
     id = id + 1
     local self=setmetatable({a=s,id=id},t); 
     return setmetatable(t.init(self,...) or self,t) end}) end
@@ -190,8 +192,9 @@ function lib.run(settings,egs,     fails,old,report,good,bad,missing,reset)
   for _,s in pairs(egs.all) do
     if settings.go == s or settings.go == "all" then
       reset()
-      local ok,msg = pcall(egs[s] or function () missing(s) end)
-      if not ok then bad(s,msg) elseif val==false then bad(s) else good(s) end end end
+      if egs[s]() ==false then bad(s) else good(s) end end  end
+      --local ok,val = pcall(egs[s] or function () missing(s) end)
+      --if not ok then bad(s,msg) elseif val==false then bad(s) else good(s) end end end
   if settings.go == "all" then report() end
   lib.rogues()
   os.exit(fails) end
