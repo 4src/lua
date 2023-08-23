@@ -25,7 +25,7 @@ OPTIONS:
 ]]
 local abs, cos,log, pi,sqrt = math.abs, math.cos, math.log, math.pi, math.sqrt
 local obj,oo,push = l.obj, l.oo, l.push
-local stats = {}
+local stats,tree = {},{}
 local NUM,SYM,ROW,COLS,TBL = obj"NUM",obj"SYM",obj"ROW",obj"COLS",obj"TBL"
 --------------------------------------------------
 --  ._        ._ _  
@@ -110,6 +110,9 @@ function TBL.add(i, row)
   else 
     i.cols = COLS(row.cells) end end 
 
+function TBL.clone(i, rows)
+  return stats.adds(TBL{i.cols.names},rows or {}) end
+  
 function TBL.summary(i, cols,want,decs,     aux,out)
   cols = cols or i.cols.y
   aux = function(_,col,     x)
@@ -140,7 +143,7 @@ function TBL.far(i,rows,r1,     t)
   t = l.map(rows, function(r2) return {i:dist(r1,r2),r2} end)
   return l.sorted(t, function(a,b) return a[1] < b[1] end)[the.Far*#rows//1][2] end
 
-function TBL.halve(i,rows,  sort)
+function TBL.halves(i,rows,  sort)
   local lefts,rights,some,X,a,b,C = {},{}
   some = #rows > the.Halves and many(rows, the.Halves) or rows
   a    = i.far(some, any(some))
@@ -151,9 +154,18 @@ function TBL.halve(i,rows,  sort)
   for n,r in pairs(l.sortid(rows,X)) do push(n <= #rows / 2 and lefts or rights, r) end
   return a,b,lefts,rights end
 ----------------------------------------------
----
--- function tree.grow(tbl)
---   function grow(tbl1)
+-- _|_.__  _  
+--  |_|(/_(/_ 
+           
+function tree.grow(tbl)
+  function grow(tbl1,stop,     here,left,right,lefts,rights)
+    here ={node=tbl1}
+    if #tbl1.rows > 2*stop then
+      left,right,lefts,rights = tbl:halves(tbl1.rows)
+      here.lefts = grow(tbl:clone(lefts),stop)
+      here.rights = grow(tbl:clone(rights),stop) end
+    return here end 
+  return grow(tbl, (#tbl.rows)^the.min) end 
 ----------------------------------------------
 --   _  _|_   _.  _|_   _ 
 --  _>   |_  (_|   |_  _> 
@@ -195,7 +207,7 @@ function stats.normal(mu,sd)
 --        _|     
 
 local egs={all={"the", "normal", "num", "sym","cols", "tbl",
-                "dist","far"}}
+                "dist","far","tree"}}
 
 function egs.the() oo(the) end
 
@@ -233,6 +245,11 @@ function egs.far(     tbl,far)
   for i = 1,#tbl.rows,20 do
      far = tbl:far(tbl.rows, tbl.rows[i]) 
      print(tbl:dist(far, tbl.rows[i])) end end
+
+function egs.tree(     tbl,far)
+  tbl=  TBL(the.file)
+  tr = tree.grow(tbl)
+  end
 ---------------------------------------------
 l.go(help,the,egs)
 return {NUM=NUM, SYM=SYM, TBL=TBL, stats=stats}
