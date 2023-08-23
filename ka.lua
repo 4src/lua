@@ -151,6 +151,10 @@ function TBL.halve(i,rows,  sort)
   for n,r in pairs(l.sortid(rows,X)) do push(n <= #rows / 2 and lefts or rights, r) end
   return a,b,lefts,rights end
 ----------------------------------------------
+---
+-- function tree.grow(tbl)
+--   function grow(tbl1)
+----------------------------------------------
 --   _  _|_   _.  _|_   _ 
 --  _>   |_  (_|   |_  _> 
 
