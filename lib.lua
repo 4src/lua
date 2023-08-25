@@ -74,11 +74,11 @@ function lib.sorted(t,fun)
   return t end
 
 -- Sorts `t` using the Schwartzian transform.
-function lib.sortid(t,fun,    u) 
-  u={}; table.sort(t, function(a,b)-- print(a.id,b.id); 
-                                    if u[a.id] == nil then u[a.id] = fun(a) end
-                                    if u[b.id] == nil then u[b.id] = fun(b) end
-                                    return u[a.id] < u[b.id] end)
+function lib.sortid(t,fun,    memo) 
+  memo={}; table.sort(t, function(a,b)-- print(a.id,b.id); 
+                                    if memo[a.id] == nil then memo[a.id] = fun(a) end
+                                    if memo[b.id] == nil then memo[b.id] = fun(b) end
+                                    return memo[a.id] < memo[b.id] end)
   return t end
 
 -- Return a function that sorts ascending on slot `x`.

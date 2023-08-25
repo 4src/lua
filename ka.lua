@@ -24,7 +24,7 @@ OPTIONS:
   -s --seed random seed = 1234567891
 ]]
 local abs, cos,log, pi,sqrt = math.abs, math.cos, math.log, math.pi, math.sqrt
-local obj,oo,push = l.obj, l.oo, l.push
+local o,obj,oo,push = l.o, l.obj, l.oo, l.push
 local stats,tree = {},{}
 local NUM,SYM,ROW,COLS,TBL = obj"NUM",obj"SYM",obj"ROW",obj"COLS",obj"TBL"
 --------------------------------------------------
@@ -136,12 +136,13 @@ function NUM.dist(i,x,y)
   return abs(x - y) end
 
 function TBL.dist(i,r1,r2,     d)
-  d=0; for _,c in pairs(i.cols.x) do d=d + c:dist(r1.cells[c.at],r2.cells[c.at])^the.p end
+  print("r1",r1,r2)
+  d=0; for _,c in pairs(i.cols.x) do print("at",c.at); d=d + c:dist(r1.cells[c.at],r2.cells[c.at])^the.p end
   return (d/#i.cols.x)^(1/the.p) end
 
 function TBL.far(i,rows,r1,     t)
-  t = l.map(rows, function(r2) return {i:dist(r1,r2),r2} end)
-  return l.sorted(t, function(a,b) return a[1] < b[1] end)[the.Far*#rows//1][2] end
+  fun=  function(r2)  print(o(r1.cells),o(r2.cells));return i:dist(r1,r2) end
+  return l.sortid(rows,fun)[the.Far*#rows//1][2] end
 
 function TBL.halves(i,rows,  sort)
   local lefts,rights,some,X,a,b,C = {},{}
@@ -240,11 +241,15 @@ function egs.dist(     tbl)
   for i = 1,#tbl.rows,20 do
     print(i, tbl:dist(tbl.rows[1], tbl.rows[i])) end end
 
-function egs.far(     tbl,far)
+function egs.far(     tbl,far,rows,r1)
   tbl=  TBL(the.file)
+  rows= tbl.rows
+  for i,row in pairs(tbl.rows) do print("~~",i, row.cells) end
   for i = 1,#tbl.rows,20 do
-     far = tbl:far(tbl.rows, tbl.rows[i]) 
-     print(tbl:dist(far, tbl.rows[i])) end end
+     r1 = rows[i]
+     print("!!",i,o(r1))
+     far = tbl:far(rows, r1) 
+     print(tbl:dist(far, r1)) end end
 
 function egs.tree(     tbl,far)
   tbl=  TBL(the.file)
