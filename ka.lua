@@ -29,7 +29,7 @@ ACTIONS:
   norm    can we generate random numbers?
   num     can we sample numbers?
   sym     can we sample symbols?
-  ols     can we make column headers?
+  cols     can we make column headers?
   tbl     can we load rows into cols and rows?
   dist    can we computer distances?
   far     can we find far values?
@@ -148,13 +148,12 @@ function NUM.dist(i,x,y)
   return abs(x - y) end
 
 function TBL.dist(i,r1,r2,     d)
-  print("r1",r1,r2)
-  d=0; for _,c in pairs(i.cols.x) do print("at",c.at); d=d + c:dist(r1.cells[c.at],r2.cells[c.at])^the.p end
+  d=0; for _,c in pairs(i.cols.x) do  d=d + c:dist(r1.cells[c.at],r2.cells[c.at])^the.p end
   return (d/#i.cols.x)^(1/the.p) end
 
 function TBL.far(i,rows,r1,     fun)
   fun = function(r2) return i:dist(r1,r2) end
-  return l.sortid(rows,fun)[the.Far*#rows//1][2] end
+  return l.sortid(rows,fun)[the.Far*#rows//1] end
 
 function TBL.halves(i,rows,  sort)
   local lefts,rights,some,X,a,b,C = {},{}
@@ -256,10 +255,8 @@ function egs.dist(     tbl)
 function egs.far(     tbl,far,rows,r1)
   tbl=  TBL(the.file)
   rows= tbl.rows
-  for i,row in pairs(tbl.rows) do print("~~",i, row.cells) end
   for i = 1,#tbl.rows,20 do
      r1 = rows[i]
-     print("!!",i,o(r1))
      far = tbl:far(rows, r1) 
      print(tbl:dist(far, r1)) end end
 
