@@ -74,12 +74,10 @@ function lib.sorted(t,fun)
   return t end
 
 -- Sorts `t` using the Schwartzian transform.
-function lib.sortid(t,fun,    memo) 
-  memo={}; table.sort(t, function(a,b)-- print(a.id,b.id); 
-                                    if memo[a.id] == nil then memo[a.id] = fun(a) end
-                                    if memo[b.id] == nil then memo[b.id] = fun(b) end
-                                    return memo[a.id] < memo[b.id] end)
-  return t end
+function lib.sortid(t,fun)
+  return lib.map(lib.sorted(lib.map(t, function(x) return {x=x, fun=fun(x)} end),
+                   lib.lt"fun"),
+             function(pair) return pair.x end) end
 
 -- Return a function that sorts ascending on slot `x`.
 function lib.lt(x) return function(t1,t2) return t1[x] < t2[x] end end
@@ -143,14 +141,13 @@ function lib.csv(sFilename,fun,      src,s)
 -- Return `t`, updated from the command-line.  For `k,v` in
 -- `t`,if the command line mentions key `k` then change `s` to a new
 -- value.  If the old value is a boolean, just flip the old. 
-function lib.cli(t,help)
+function lib.cli(t)
   for k,v in pairs(t) do
     v = tostring(v)
     for n,x in ipairs(arg) do
       if x=="-"..(k:sub(1,1)) or x=="--"..k then
         v = v=="false" and "true" or v=="true" and "false" or arg[n+1] end end 
     t[k] = lib.coerce(v) end
-  if t.help then os.exit(print(help)) end
   return t end
 
 -- Parse `help` text to extract settings.
@@ -199,9 +196,10 @@ function lib.run(settings,egs,     fails,old,report,good,bad,missing,reset)
   lib.rogues()
   os.exit(fails) end
 
-function lib.go(help,the,egs)
+function lib.go(help,the,egs,actions)
   if not pcall(debug.getlocal,5,1) then 
-     the=lib.cli(the, help) 
-     lib.run(the,egs) end end
+     the=lib.cli(the)
+     if the.help then print(help) 
+     else lib.run(the,egs) end end end
 
 return lib

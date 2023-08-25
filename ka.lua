@@ -10,10 +10,11 @@
 local l=require"lib"
 local the,help=l.settings[[
 
-asd asda
+ka.lua: killer app for knowledge aaqusition
+(c) Tim Menzies <timm@ieee.org> 2023, BSD-2
 
 USAGE:
-  lua ka.lua
+  ./ka.lua [OPTIONS] -g [ACTIONS]
 
 OPTIONS:
   -f --file file locaation = ../data/auto93.csv
@@ -22,7 +23,18 @@ OPTIONS:
   -h --help do help = false
   -p --p    distance coeffecient = 2
   -s --seed random seed = 1234567891
-]]
+
+ACTIONS:
+  the     show settings
+  norm    can we generate random numbers?
+  num     can we sample numbers?
+  sym     can we sample symbols?
+  ols     can we make column headers?
+  tbl     can we load rows into cols and rows?
+  dist    can we computer distances?
+  far     can we find far values?
+  tree    can we recursively bi-cluster?]]
+
 local abs, cos,log, pi,sqrt = math.abs, math.cos, math.log, math.pi, math.sqrt
 local o,obj,oo,push = l.o, l.obj, l.oo, l.push
 local stats,tree = {},{}
@@ -140,8 +152,8 @@ function TBL.dist(i,r1,r2,     d)
   d=0; for _,c in pairs(i.cols.x) do print("at",c.at); d=d + c:dist(r1.cells[c.at],r2.cells[c.at])^the.p end
   return (d/#i.cols.x)^(1/the.p) end
 
-function TBL.far(i,rows,r1,     t)
-  fun=  function(r2)  print(o(r1.cells),o(r2.cells));return i:dist(r1,r2) end
+function TBL.far(i,rows,r1,     fun)
+  fun = function(r2) return i:dist(r1,r2) end
   return l.sortid(rows,fun)[the.Far*#rows//1][2] end
 
 function TBL.halves(i,rows,  sort)
@@ -206,13 +218,13 @@ function stats.normal(mu,sd)
 --   _    _    _ 
 --  (/_  (_|  _> 
 --        _|     
+local egs ={all={}}
 
-local egs={all={"the", "normal", "num", "sym","cols", "tbl",
-                "dist","far","tree"}}
+help:gsub("\n[%s]+([%S]+)",function(x) push(egs.all,x) end)
 
 function egs.the() oo(the) end
 
-function egs.normal(   t)
+function egs.norm(   t)
   t={}
   for i = 1,1000 do t[i] = stats.normal(10,1) end
   table.sort(t)
@@ -256,5 +268,5 @@ function egs.tree(     tbl,far)
   tr = tree.grow(tbl)
   end
 ---------------------------------------------
-l.go(help,the,egs)
+l.go(help,the,egs,actions)
 return {NUM=NUM, SYM=SYM, TBL=TBL, stats=stats}
