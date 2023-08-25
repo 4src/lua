@@ -21,11 +21,14 @@ OPTIONS:
   -F --Far  distance to other pole = .9
   -g --go  start up action = nothing
   -h --help do help = false
+  -H --Halves how many to search = 256
+  -m --min  min size = .5
   -p --p    distance coeffecient = 2
   -s --seed random seed = 1234567891
 
 ACTIONS:
   the     show settings
+  many    can we sample n numbers?
   norm    can we generate random numbers?
   num     can we sample numbers?
   sym     can we sample symbols?
@@ -157,8 +160,8 @@ function TBL.far(i,rows,r1,     fun)
 
 function TBL.halves(i,rows,  sort)
   local lefts,rights,some,X,a,b,C = {},{}
-  some = #rows > the.Halves and many(rows, the.Halves) or rows
-  a    = i.far(some, any(some))
+  some = #rows > the.Halves and l.many(rows, the.Halves) or rows
+  a    = i.far(some, l.any(some))
   b    = i.far(some, a)
   C    = i:dist(a,b)
   if sort and i.d2h(b) < i.d2h(a) then a,b = b,a end
@@ -171,8 +174,9 @@ function TBL.halves(i,rows,  sort)
            
 function tree.grow(tbl)
   function grow(tbl1,stop,     here,left,right,lefts,rights)
+    print(stop)
     here ={node=tbl1}
-    if #tbl1.rows > 2*stop then
+    if #(tbl1.rows) > 2*stop then
       left,right,lefts,rights = tbl:halves(tbl1.rows)
       here.lefts = grow(tbl:clone(lefts),stop)
       here.rights = grow(tbl:clone(rights),stop) end
@@ -222,6 +226,10 @@ local egs ={all={}}
 help:gsub("\n[%s]+([%S]+)",function(x) push(egs.all,x) end)
 
 function egs.the() oo(the) end
+
+function egs.many(      t)
+  t={}; for i=1,100 do t[i]=i end
+  for _,k in pairs(l.many(t,10)) do print(k) end end
 
 function egs.norm(   t)
   t={}
