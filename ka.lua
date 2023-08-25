@@ -221,6 +221,7 @@ function stats.normal(mu,sd)
 --   _    _    _ 
 --  (/_  (_|  _> 
 --        _|     
+
 local egs ={all={}}
 
 help:gsub("\n[%s]+([%S]+)",function(x) push(egs.all,x) end)
