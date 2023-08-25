@@ -25,9 +25,11 @@ OPTIONS:
   -m --min  min size = .5
   -p --p    distance coeffecient = 2
   -s --seed random seed = 1234567891
+  -S --Some how many nums to keep = 1024
 
 ACTIONS:
   the     show settings
+  some    does SOME sample across whole space?
   many    can we sample n numbers?
   norm    can we generate random numbers?
   num     can we sample numbers?
@@ -42,32 +44,39 @@ local abs, cos,log, pi,sqrt = math.abs, math.cos, math.log, math.pi, math.sqrt
 local o,obj,oo,push = l.o, l.obj, l.oo, l.push
 local stats,tree = {},{}
 local NUM,SYM,ROW,COLS,TBL = obj"NUM",obj"SYM",obj"ROW",obj"COLS",obj"TBL"
+local SOME=obj"SOME"
+--------------------------------------------------
+--  _ _ ._ _  _  
+-- _>(_)| | |(/_ 
+function SOME.init(i) i._all, i.ok, i.n = {}, true, 0 end
+
+function SOME.add(i,x,     a,pos)
+  i.n = i.n + 1
+  if     #i._all  < the.Some     then i.ok=false; i._all[#i._all + 1] = x 
+  elseif l.rand() < the.Some/i.n then i.ok=false; i._all[l.rint(1,#i._all)] = x end end
+
+function SOME.all(i)
+  if not i.ok then table.sort(i._all); i.ok=true end
+  return i._all end
 --------------------------------------------------
 --  ._        ._ _  
 --  | |  |_|  | | | 
 
 function NUM.init(i,  at,txt)
-  i.n, i.at, i.txt = 0, at or 0, txt or ""
-  i.ok, i._all = true, {} 
+  i.n,i.has,i.at,i.txt, i.has = 0,SOME(),at or 0,txt or "" 
   i.heaven = i.txt:find"-$" and 0 or 1 end
 
+function NUM.all(i)     return i.has:all() end
 function NUM.d2h(i,row) return abs(i.heaven - i:norm(row.cells[i.at])) end
-function NUM.div(i) return stats.sd(i:all()) end
-function NUM.mid(i) return stats.median(i:all()) end
+function NUM.div(i)     return stats.sd(i.has:all()) end
+function NUM.mid(i)     return stats.median(i.has:all()) end
 
 function NUM.add(i,x)
   if x~="?" then
-    i.n = i.n + 1
-    i.ok = false
-    push(i._all,x) end end
-
-function NUM.all(i)
-  if not i.ok then table.sort(i._all) end
-  i.ok=true
-  return i._all end
+    i.n = i.n + 1; i.has:add(x) end end
 
 function NUM.norm(i,x,    a)
-  a = i:all()
+  a = i.has:all()
   return x=="?" and x or (x-a[1])/(a[#a] - a[1] + 1E-30) end
 ---------------------------------------------
 --   _      ._ _  
@@ -75,16 +84,15 @@ function NUM.norm(i,x,    a)
 --      /         
 
 function SYM.init(i,  at,txt)
-  i.n, i.at, i.txt = 0, at or 0, txt or ""
-  i.counts = {} end
+  i.n,i.has,i.at,i.txt, i.has = 0,{},at or 0,txt or "" end 
 
-function SYM.mid(i) return stats.mode(i.counts) end
-function SYM.div(i) return stats.ent(i.counts) end
+function SYM.mid(i) return stats.mode(i.has) end
+function SYM.div(i) return stats.ent(i.has) end
 
 function SYM.add(i,x)
   if x~="?" then
     i.n = i.n + 1
-    i.counts[x] = 1 + (i.counts[x] or 0) end end
+    i.has[x] = 1 + (i.has[x] or 0) end end
 ----------------------------------------------
 --  ._   _        
 --  |   (_)  \/\/ 
@@ -156,7 +164,7 @@ function TBL.dist(i,r1,r2,     d)
 
 function TBL.far(i,rows,r1,     fun)
   fun = function(r2) return i:dist(r1,r2) end
-  return l.sortid(rows,fun)[the.Far*#rows//1] end
+  return l.keysort(rows,fun)[the.Far*#rows//1] end
 
 function TBL.halves(i,rows,  sort)
   local lefts,rights,some,X,a,b,C = {},{}
@@ -227,6 +235,15 @@ local egs ={all={}}
 help:gsub("\n[%s]+([%S]+)",function(x) push(egs.all,x) end)
 
 function egs.the() oo(the) end
+
+function egs.some(    s,t,u)
+  s=SOME()
+  the.Some=16
+  for i=1,100 do s:add(i//10) end
+  t,u={},{}
+  for k,x in pairs(s:all()) do u[k]=1+(u[k] or 0); t[x] = 1+(t[x] or 0) end 
+  for k,v in pairs(t) do print("val",k,v,("*"):rep(v)) end 
+  for k,v in pairs(u) do print("key",k,v,("*"):rep(v)) end end
 
 function egs.many(      t)
   t={}; for i=1,100 do t[i]=i end

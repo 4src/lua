@@ -41,10 +41,11 @@ function lib.rnd(n,  nPlaces,     mult)
 -- Generate random numbers.
 local Seed = 937162211
 -- Returns random integers `nlo` to `nhi`.
-function lib.rint(nlo,nhi)  return math.floor(0.5 + lib.rand(nlo,nhi)) end
+function lib.rint(nlo,nhi)  
+  return math.floor(0.5 + lib.rand(nlo,nhi))  end
 -- Returns random floats `nlo` to `nhi` (defaults 0 to 1)
 function lib.rand(nlo,nhi) 
-  nlo, nhi = nlo or 0, nhi or 1
+  nlo,nhi=nlo or 0, nhi or 1
   Seed = (16807 * Seed) % 2147483647
   return nlo + (nhi-nlo) * Seed / 2147483647 end
 
@@ -74,7 +75,7 @@ function lib.sorted(t,fun)
   return t end
 
 -- Sorts `t` using the Schwartzian transform.
-function lib.sortid(t,fun)
+function lib.keysort(t,fun)
   return lib.map(lib.sorted(lib.map(t, function(x) return {x=x, fun=fun(x)} end),
                    lib.lt"fun"),
              function(pair) return pair.x end) end

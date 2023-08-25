@@ -1,0 +1,559 @@
+
+plain
+
+Introduction
+It sounds somewhat hollow when someone   
+warns about a  problem they helped to create
+(e.g. see  President Eisenhower's 1961 farewell address   on  the  military-industrial complex(Eisenhower said "We must guard against the acquisition of unwarranted influence, whether sought or unsought, by the military-industrial complex. The potential for the disastrous rise of misplaced power exists and will persist.")- an institution generated, in part,
+by  his administration's budget priorities).
+Hopefully, this paper is different.  Here it will be argued that the   problems with PROMISE, that I helped to create, can also be solved by   tools developed via experience with
+the PROMISE
+data data sets.
+
+Specifically, I will say that the future of PROMISE should be
+less about model creation 
+are more about the review of models. Reviewing models is most practical and most useful 
+ when  
+when we can reduce the cognitive load of the people doing the reviews.
+This is   something any PROMISE author can do via (a) instance and feature selection; followed by 
+(b) some clustering  to find examples with common properties );
+followed by (c) some contrast set learning
+between the clusters  to find changes that can change outcomes.
+When we do this,  the resulting contrast sets   can be characterized by just  a few examples and attributes krishna2020learning. 
+To say that another way:
+itemize
+The lesson of PROMISE (at least, for me) is that the space of  possible effective changes within 
+SE data is  
+surprisingly small and, hence, is easy to browse and understand and apply. 
+
+Which is to say,   
+PROMISE has the expertise to redefine and simplify   the next
+generation of human/AI interaction.
+itemize
+
+
+
+
+
+
+
+
+
+What's Wrong With PROMISE?
+This paper tries to learn from the past to propose a new direction for this future. This proposal is a  protest, of sorts, about the kinds of papers   which do not 
+generalize beyond a  
+very similar set of methods being applied to a  very similar set of data.
+
+To   some extent, this is my fault.
+Having been present at several of the early PROMISE meetings and like many others, it
+was  impressive to see so many researchers
+take up this idea of  reproducible results(.
+In 2023 it is  hard to believe that "reproducible SE" was a radical idea.  But   once upon a time, there was  little sharing of data and scripts- so much so that in 2006 Lionel Briand  predicted the failure of PROMISE saying "no one will give you data".).
+Hence, with many others,
+ many papers were written that looked, again and again, at data sets like
+COC81, 
+JM1, XALAN,  
+DESHARNIS, 
+and all the other data sets that were used (and reused) in the first decade of PROMISE.
+
+Many of those papers lead to  successful research. In 2018  20% of the papers listed by Google Scholar Software Metrics at IEEE Transactions
+on  SE used data sets from that first decade of PROMISE. So while other research areas struggled to obtain reproducible result, PROMISE swam (as it were) in an ocean of reproducibility.
+
+The problem was that, in  the second decade of PROMISE, many researchers still continue that kind of first-decade research. For example, 
+like many of our
+colleagues, we still review papers from authors who think it valid
+to publish results based on  (e.g.) the COC81 data set first published in 1981 Boehm1981; the DESHARNIS data set,  first published in 1989 desharnais1989analyse; the JM1 data, first published in 2004 menzies2004good; or the  XALAN data set, first published in 2010 jureczko2010towards.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+Meanwhile, AI fever took over   SE. As of 2018,
+it became   standard at ASE, FSE, ICSME, ICSE, etc to see papers
+making much use of AI. Further, the MSR conference (which in the early days looked like a sister   to PROMISE) has grown to a large annual A-grade venue.
+Just as MSR grew, so too did PROMISE shrink. In 2008, PROMISE was    a two-day event with  70 attendees. Now it is a much smaller and shorter event- and it is easy to see why. Without definitive results or a novel technological position, it became difficult to differentiate   PROMISE from dozens of other, somewhat more prominent, venues.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ To say all that another way, there is now strong motivation  to rethink PROMISE and look for some unique goal  distinguishes this venue from everywhere else.  
+figure[!t]
+[width=3.5in]img/x.png
+Lines of code, AI-related systems at Google in 2015 SculleyHGDPECYC15.
+The tiny black square in the middle is "core AI" and the rest are  the standard components of cloud-based S.google
+figure
+
+
+What's Wrong With AI?
+
+ If PROMISE is the answer, what is the question? What issue should this community explore?
+We need look no further than the problem of reviewing AI models. 
+  In a "ship-it" oriented-culture,
+the race to get products out the door means that is little time for
+review and review-oriented reasoning.
+Consequently, dangerous products are shipped to the general community.
+The fairness and discrimination literature is full of a lamentably long
+list where data mining leads to  software that makes decisions that   harm people;
+e.g. just looking at  the Cruz et al. cruz2021promoting  examples:
+itemize
+Proposals from low-income groups are   are five times more  likely     to be incorrectly ignored by donation groups;
+Woman can be five times more likely to be incorrectly classified as low income;
+African Americans are five times more likely to  languish in prison until trial,
+rather than we given bail. 
+itemize
+These are just a few of the many  reported examplesrudin2019explaining(See also 
+http://tiny.cc/bad23a, http://tiny.cc/bad23b, http://tiny.cc/bad23c) of algorothm discrimination.
+For example,   see the example
+in the last chapter of  noble2018algorithms where a successful
+hair salon went bankrupt due to   choices inside the YELP recommendation algorithm.
+
+To understand the root cause of this discrimination, we must first understand that   AI software is still software.
+In a 2015 talk   Sculley et al. SculleyHGDPECYC15  offered Figure google which
+represents the size (in lines of code) of Google’s software suite. Note how small the AI box is, buried away in the middle of all of the other software.  More recently, 
+ Amershi et al. (from   Microsoft 8804457) describe their industrial-AI work as a nine-step pipeline.  In that pipeline, only the   model training
+ (which Amershi et al. describe as "a morning's work, each week")
+ might be called core AI while the other steps in the pipeline would be familiar to any software engineer who has worked with databases (for example, there first three steps
+are about requirements, data collection, and data cleaning).  
+
+Since AI software is software, then the   problems with SE are also problems with AI.
+For example,  Conway's Law   states that "organizations design (software)  that mirror their own communication structure".  This is an  important observation  since
+organizations, like people, routinely try to take advantage of some other group(As  Mathews mathews23 says "people often think of their own hard work or a good decision they made. However, It is often more accurate to look at advantages like the ability to borrow money from family and friends when you are in trouble, deep network connections so that you hear about opportunities or have a human look at your application,  the ability to move on from a mistake that might send someone else to jail, help at home to care for children,  etc. The narrative that success comes from hard work, misses that many people work hard and never succeed. Success often comes from exploiting a playing field that is far from level and when push comes to shove, we often want those advantages for our children, our family, our friends, our community, our organizations."). Hence, due to Conway's Law, it is hardly surprising that our software can disadvantage certain social groups. 
+
+
+
+
+
+Clearly there is a need for more groups to be able to quickly review software products, including complex AI models. Managing this problem requires a combination of social, legal, and technical solutions.
+For the forum of PROMISE'23,  we will focus on the technical). But before that,  it is appropriate to review some  of the non-technical approaches.
+
+Firstly,   we need to stop "flattenning";  i.e trivializing (and even ignoring)  the legitimate howl of protests, across many decades, that our institutions  are systematically discriminating against certain social groupings ,Coaston19. 
+As Bowleg warns doi:10.2105/AJPH.2020.306031,   flattening 
+        "depoliticized and stripped  (its) attention to power, social justice, and praxis".   I urge us (as a community) to 
+          not flatten our discussions and, instead,      
+        acknowledge our relationship and responsibilities  to those effected by the tools we  deliver. 
+
+
+Next,  we need a range of revised social and legal changes.
+Organizations need to review their hiring practices in order to diverse the range of viewpoints seen in design teams. We need better   requirements engineering practices that focus on extensive communication with the stakeholders of the software (specifically, the stakeholders other than  the developers of the product).
+Software testing teams need to extend their tests to cover the concerns
+of this stakeholders (i.e. to cover issues like discrimination against specific
+social groups cruz2021promoting,10.1145/3585006,Chakraborty).
+Legislation is required that moves us away from the internal application
+ of voluntary  industrial standards (why? well, recalling  the VW emissions scandal, it is clear
+that corporations can have detrimental internal policies(https://en.wikipedia.org/wiki/Volkswagen_emissions_scandal)).
+  Canellas canellas21 and Mathews et al. matthewsshould argue for a tiered process where the top-tier most-potentially-discriminatory 
+projects are routinely reviewed by an independent external review team (in the manner of the
+IEEE 1012 independent verification and validation standard).
+
+
+To close this section,
+we repeat comments from Ben Green green2022flaws.
+He notes that   reviewing of software systems
+and AI systems  is becoming a legislative  necessity. 
+He reports  on  policies    demanding   humans-in-the-loop auditing of decisions made by   software.  Green's comments are the bridge to the next section since 
+he also
+notes that it is not enough to merely  enact laws and policies that require
+more human auditing. When faced with large and complex problems,
+  cognitive theory simon1956rational tells us 
+  humans  use heuristic "cues" to lead them to the most important parts 
+of a model before moving on to their next
+task.   Such cues are essential if humans are to reason about large problems.   That said,  using cues can introduce their own errors:
+   
+   ...people (including experts) are susceptible to "automation bias" (involving)  omission errors—failing to take action because the automated system did not provide an alert—and commission error green2022flaws.
+ This means  that   oversight  can lead to the opposite desired effect  by "legitimizing the use of   faulty and controversial (models) without addressing (their fundamental issues") green2022flaws. 
+
+
+Cognitive Load and Explainability
+ To support Green's requirements for better review of software, we need some way to
+ support that review, while avoiding the mistakes that might be made by people. For that task, we need to know a little about how humans address complex tasks.
+
+
+Larkin et al. Larkin1335 characterize human expertise in terms of very small short term memory, or STM   and 
+a very  large long term memory, or LTM.  
+The LTM holds   separate tiny  rule fragments
+that explore the contents
+of STM to say "when you see THIS, do THAT".
+When an LTM rule triggers, its
+consequence can rewrite STM contents which,
+in turn, can trigger other rules.
+Experts are experts, says Larkin et al. Larkin1335 because the patterns in their  LTM
+patterns dictate what to do, without needing to pause for reflection. Novices perform worse than experts,
+says Larkin et al., when they fill  up  their STM with too many to-do's where they plan to pause and reflect on what to do next.   
+This thoery is widely endorsed. For example, 
+ Phillips et al. phillips2017FFTrees discuss how models containing tiny rule fragments can be  quickly comprehended by 
+ doctors in emergency rooms making rapid  decisions; or by soldiers on guard  making snap decisions about whether to fire or not on a potential enemy; or by  stockbrokers making instant decisions about buying or selling stock. 
+ 
+ In summary,   according to this
+ psychological science theory czerlinski1999good, gigerenzer1999good, martignon2003naive, brighton2006robust, martignon2008categorization, gigerenzer2008heuristics, phillips2017FFTrees, gigerenzer2011heuristic,neth2015heuristics,
+humans can best review a system when they can "fit" it into their LTM; i.e., when that model comprises many small rule
+fragments. Hence, to help humans understand and review a systems, that system has to be summarized into a much smaller model.
+
+Enter data mining.
+
+Results from PROMISE-related Data
+Within the context of last section, it is relevant to report that while
+working with PROMISE data sets, I have seen   much evidence of an effect called keys; i.e. that in many  data sets, using data mining methods, it can be shown that:
+
+A few variables can  control the rest.  
+
+Note the connection of keys to cognitive effort and Green's call for better review methods:
+itemize
+    XXX
+    itemize
+itemize
+Outside of SE, I have seen keys in hospital nutrition analysis partington2015reduced and avionics control systems. Within SE, I’ve found keys  while doing analytics for:
+itemize
+ 
+Defect prediction datasets menzies2006data where two to three attributes were
+enough to predict for defects
+Effort estimation models chen2005finding where four to eight attributes
+where enough to predict for defects;
+
+Requirements models for NASA deep space missions jalali2008optimizing where
+two-thirds of the decision attributes could be ignored while still finding effective 
+optimizations; 
+Github issue close time predictors rees2017better where in 11 data sets,
+the median number of attributes required for effective prediction was 3.
+itemize
+One way to see how many keys are in a system is to ask how many  prototypes (minimum number of examples)  are required to explore that system. 
+At PROMISE"08, we represented defect prediction results where models learned from  the
+first 50
+examples (selected at random) did not worse that models learned from 1000s of more examples menzies2008implications. We call this the "early-bird effect".
+In 2023 we found another example of "early bird" in a study explored 20 years of data from 250 Github projects with 6000 commits per project (average).
+In that study, we found that defect models learned   from the first 150 commits predict
+just as well as models learned from much larger samples 10.1145/3583565.
+
+Of course, not all data sets can be explored via  few dozen examples. 
+Recently,  we have successfully modelled security violations in 28,750 Mozilla functions with 271 exemplars and 6000 commits from Github using just 300 exemplars yu2019improving(Specifically, after an incremental active
+learning session, a SVM has just under 300 support vectors.). While 300 is not  an especially small
+number, it is small enough such that, given two analysts and a month, it would be possible
+to review them all.
+
+
+
+Recently we have been exploring multi-objective
+optimization methods using data mining agrawal2020better. In this scheme,
+before evaluating examples, some recursive bi-clustering procedure is applied. 
+At each level of the recursion, the two most distant examples are evaluated and the data
+nearest worst example is deleted. The process then repeats on the surviving data.
+In this way,  examples are explored using     evaluations. Given
+a large enough initial population (e.g. ), the procedure is known to be faster and find better solutions that state-of-the-art genetic algorithms and sequential
+model-optimization methods Chen19,lustosa2023optimizing
+(even though it only evaluates  examples while other methods
+might evaluate 100s to 1000s of examples).
+
+
+
+figure
+  img/aof.png
+Fairness vs. Accuracy. 10,000   hyperparameter options,  
+    for 
+random forest;   LinReg;   boosted trees;   decision trees;    feed-forward NN.
+From cruz2021promoting.onefigure 
+
+
+Returning now to the issue of reviewing models for discrimination,
+  Figure one comes from Cruz et al. cruz2021promoting.
+  That figure 
+ shows the effects of 10,000 different   hyperparameter   options applied to five
+machine learning algorithms
+(random forest; LinReg;
+boosted trees; decision trees; feed-forward NN)(The hyperparameters of     Random Forests,       learners
+include
+(a) how many    trees to build (e.g., ); (b) how many features 
+to use in each tree (e.g., );
+(c) how to  poll the whole forest (e.g., majority or weighted majority); 
+(d) what impurity measures (e.g., gini or entropy or log.loss); (e) what is the minimum examples needed to branch a sub-tree
+(e.g., min; (f) should branches be binary or n-arty.
+In all, this gives us
+ different ways, just to configure one   learner in Figure one. ). 
+Note that adjusting tunings  can change 
+learners from   low to   high accuracies and fairness (measured here as the ratio of false
+positives between  different social groups such as men and women).   
+A naive approach for finding    a good balance between accuracy and fairness (the point labelled "A" in red) whould evaluate all 10,000 points. However, with 
+
+(The reader might protest at this example saying "this is not an SE problem" to which we reply it is a SE testing problem for non-functional requirement; i.e. fairness to different stakeholders. Measuring, then mitigating unfairness has received much attention in recent years in the SE literature, including distinguished paper awards at
+FSE'17 Galhotra and FSE'21 Chakraborty.)
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+In turns out that standard algorithms from PROMISE can be applied to the
+fairness problem of building accurate models that do not discriminate against particular stakeholders.
+When reasoning over multiple goals
+(e.g. the accuracy vs fairness axis of  Figure one), it may be necessary to sometimes  accept some  compromise where (e.g.) accuracy must be reduced.
+For example, consider 
+the hyperparameter 
+option shown as points redA 
+and
+redB in Figure one. If this model was reviewed by a male stakeholder unconcerned with gender
+issues, he might select  point redA  since it has highest accuracy. A very different conclusion
+might be reached by a female stakeholder who   prefers   redB since that point has nearly highest accuracy, and also a good balance between  the  false
+positives of men:women.    
+
+How can we effectively and efficiently explore the 10,000 options shown in 
+ Figure one? Return to the recursive clustering algorithm
+ discussed above, Chen et al. report success with an approach where,
+ at every level of the recursion:
+ itemize 
+ 
+ Two very distant hyperparameter options are executed.
+ All   examples closest to the worst  option are deleted.
+ Here, "worst'; would be some multi-goal predicate such as "which option
+ generates a point on the  accuracy and fairness plot of  Figure one
+ that is closest to "hell" (the point where accuracy=0 and fairness=0).
+ performance is pruned;
+ The recursion continues on the surviving options.
+ itemize
+ This approach would required  evaluations to find
+ good options within the space shown in  Figure one.
+ Chen et al Chen19 report that this approach achieves results
+ competitive with state-of-the-art genetic algorithms for a wide range
+ of tasks. Note that any PROMISE researcher could implement
+ the above (e.g. using a recursive (k=2)Means algorithm). The only
+ additional machinery required would the implementation of the
+ "worst" predicate mentioned above (which would not be a hard task).
+ And  returning back to requirements engineering, note that this
+ technology would suffice to find viable trade-offs between competing
+ goals of multiple stakeholders.
+
+ 
+Conclusion: A New Name for "PROMISE"
+Before using complex models, we first need to trust them. Green warns that, historically, the track record of humans
+reviewing models is very poor (and perhaps even dangerous). 
+In order to improve on that, we must reduce the cognitive
+load of humans reducing models. To reduce cognitive load, large complex models have to be summarized into much smaller ones.
+
+
+A repeated result (seen in PROMISE data, and elsewhere) is that very small models often suffice.  This is to say
+that PROMISE technology can be the basis of the next generation of fast-review methods for AI models. 
+I hence propose
+that PROMISE renames itself to something  like:
+itemize
+"explainable analytics"; or  
+"usability and data mining";  or
+"simplicity in software analytics"; or
+"minimal modeling";  or 
+"YAGNI analytics" (yagni = "you ain't gonna need it").  
+itemize
+Obviously, the right name would require further work. But just as a suggestion, I would discourage long names with many conjunctions (since they make it hard to see "theme" of the meeting).
+Better instead to create some simple "buzzword"  phrase that can become an ear worm spreading through-out the community.
+Also, for historical reasons, it is worth considering keeping the phrase "PROMISE" in the new title. 
+
+At that kind
+of venue, if some modeling procedure works, then researchers would be obliged to perform ablation studies to see
+how much can be thrown away while preserving model performance (where  performance would be measured in a multi-dimensional
+manner including  much more that mere predictive performance but also runtime, energy usage, discrimination measures, etc).
+
+Human-in-the-loop studies would also be strongly encouraged in this PROMISE v2.0 venue.
+But in keeping with PROMISE's long and admirable history
+of reproducibility, these experiments should include human surrogates (developed perhaps via data mining) that can model the strengths
+and weaknesses of subject matter experts (and these surrogates should be shared as part of a paper's reproduction package).
+
+XXX test for not predictions for changes. have to hamde some model assutns. eng the k-test.
+
+less is more ablation study. 
+
+In sumamrt I propose a name change for this meeting. 
+
+THe international Conferen ce of Controlling SE Models via Data Analytics
+in SE
+
+
+One issue not yet discussed is the challenge of large language
+models to the field of SE for AI and AI for SE. It is hard to over-state
+the seismic impact these new algorithms . According to Charles charles:
+quote
+The storm of generative AI systems such as ChatGPT, DALL-E, and Google’s Bard is transforming entire industries. According to the MarketAndMarket report, the generative AI market is expected to grow from 11.3 billion in 2023 to 51.8 billion in 2028.
+quote
+Such unprecedented commercial interest in generative AI is now forcing SE researchers to  orientate  themselves around these new tools. What future is there for PROMISE in that space?
+
+Returning to the examples of this paper, we can see that there is a role in predictive modeling for helping humans racing to keep apace with changing systems, even when those systems have highly variable requirements. To say that another way, generative AI needs a shepherd that can check when it is going off course, and proposing mid-course corrections.  To be effective,
+that shepherd needs to run as fast as the AI systems they are monitoring. Decades of work at PROMISE has resulted in well-understood scalable automatic tools for extracting meaning from data.  That technology has a role in herding the next generation of AI tools. 
+
+ 
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+ ACM-Reference-Format
+acmart
+
+document
+
