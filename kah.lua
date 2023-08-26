@@ -50,7 +50,7 @@ local SOME=obj"SOME"
 -- _>(_)| | |(/_
 function SOME.init(i) i._all, i.ok, i.n = {}, true, 0 end
 
-function SOME.add(i,x,     a,pos)
+function SOME.add(i,x)
   i.n = i.n + 1
   if     #i._all  < the.Some     then i.ok=false; i._all[#i._all + 1] = x
   elseif l.rand() < the.Some/i.n then i.ok=false; i._all[l.rint(1,#i._all)] = x end end
@@ -152,7 +152,7 @@ function SYM.dist(i,x,y)
   return (x=="?" and y=="?" and 1) or (x==y and 0 or 1) end
 
 function NUM.dist(i,x,y)
-  if  x=="?" and y=="?" then return 1 end
+ if  x=="?" and y=="?" then return 1 end
   x,y = i:norm(x), i:norm(y)
   if x=="?" then x = y>.5 and 0 or 1 end
   if y=="?" then y = x>.5 and 0 or 1 end
@@ -160,7 +160,7 @@ function NUM.dist(i,x,y)
 
 function TBL.dist(i,r1,r2,     d)
   d=0; for _,c in pairs(i.cols.x) do  d=d + c:dist(r1.cells[c.at],r2.cells[c.at])^the.p end
-  return (d/#i.cols.x)^(1/the.p) end
+  return (d/#i.cols.x)^(1/the.p) end 
 
 function TBL.far(i,rows,r1,     fun)
   fun = function(r2) return i:dist(r1,r2) end
@@ -180,16 +180,16 @@ function TBL.halves(i,rows,  sort,    lefts,rights,some,X,a,b,C)
 -- _|_.__  _
 --  |_|(/_(/_
 
-function tree.grow(tab)
-  function grow(tbl1,stop)
+function tree.grow(tbl1)
+  function grow(tbl2,stop)
     local here,_,lefts,rights
-    here ={node=tbl1}
-    if #(tbl1.rows) > 2*stop then
-      _,_,lefts,rights = tab:halves(tbl1.rows)
-      here.lefts  = grow(tab:clone(lefts),stop)
-      here.rights = grow(tab:clone(rights),stop) end
+    here ={node=tbl2}
+    if #(tbl2.rows) > 2*stop then
+      _,_,lefts,rights = tbl1:halves(tbl2.rows)
+      here.lefts  = grow(tbl1:clone(lefts),stop)
+      here.rights = grow(tbl1:clone(rights),stop) end
     return here end
-  return grow(tab, (#tab.rows)^the.min) end
+  return grow(tbl1, (#tbl1.rows)^the.min) end
 ----------------------------------------------
 --   _  _|_   _.  _|_   _
 --  _>   |_  (_|   |_  _>
@@ -236,14 +236,11 @@ help:gsub("\n[%s]+([%S]+)",function(x) push(egs.all,x) end)
 
 function egs.the() oo(the) end
 
-function egs.some(    s,t,u)
+function egs.some(    s)
   s=SOME()
-  the.Some=16
+  the.Some=64
   for i=1,100 do s:add(i//10) end
-  t,u={},{}
-  for k,x in pairs(s:all()) do u[k]=1+(u[k] or 0); t[x] = 1+(t[x] or 0) end
-  for k,v in pairs(t) do print("val",k,v,("*"):rep(v)) end
-  for k,v in pairs(u) do print("key",k,v,("*"):rep(v)) end end
+  l.oo(s:all())end
 
 function egs.many(      t)
   t={}; for i=1,100 do t[i]=i end
