@@ -1,20 +1,20 @@
 #!/usr/bin/env lua
---  __                            ___
--- /\ \                          /\_ \
--- \ \ \/'\      __              \//\ \    __  __     __
---  \ \ , <    /'__`\              \ \ \  /\ \/\ \  /'__`\
---   \ \ \\`\ /\ \L\.\_      __     \_\ \_\ \ \_\ \/\ \L\.\_
---    \ \_\ \_\ \__/.\_\    /\_\    /\____\\ \____/\ \__/.\_\
---     \/_/\/_/\/__/\/_/    \/_/    \/____/ \/___/  \/__/\/_/
-
+--  __                __                   ___                        
+-- /\ \              /\ \                 /\_ \                       
+-- \ \ \/'\      __  \ \ \___             \//\ \    __  __     __     
+--  \ \ , <    /'__`\ \ \  _ `\             \ \ \  /\ \/\ \  /'__`\   
+--   \ \ \\`\ /\ \L\.\_\ \ \ \ \      __     \_\ \_\ \ \_\ \/\ \L\.\_ 
+--    \ \_\ \_\ \__/.\_\\ \_\ \_\    /\_\    /\____\\ \____/\ \__/.\_\
+--     \/_/\/_/\/__/\/_/ \/_/\/_/    \/_/    \/____/ \/___/  \/__/\/_/
+                                                                   
 local l=require"lib"
 local the,help=l.settings[[
 
-ka.lua: killer app for knowledge aaqusition
+kah.lua: knowledge acquisition helper
 (c) Tim Menzies <timm@ieee.org> 2023, BSD-2
 
 USAGE:
-  ./ka.lua [OPTIONS] -g [ACTIONS]
+  ./kah.lua [OPTIONS] -g [ACTIONS]
 
 OPTIONS:
   -f --file file locaation = ../data/auto93.csv
