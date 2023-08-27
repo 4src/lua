@@ -160,7 +160,7 @@ function NUM.dist(i,x,y)
 
 function TBL.dist(i,r1,r2,     d)
   d=0; for _,c in pairs(i.cols.x) do  d=d + c:dist(r1.cells[c.at],r2.cells[c.at])^the.p end
-  return (d/#i.cols.x)^(1/the.p) end 
+  return (d/#i.cols.x)^(1/the.p) end
 
 function TBL.far(i,rows,r1,     fun)
   fun = function(r2) return i:dist(r1,r2) end
@@ -180,16 +180,16 @@ function TBL.halves(i,rows,  sort,    lefts,rights,some,X,a,b,C)
 -- _|_.__  _
 --  |_|(/_(/_
 
-function tree.grow(tbl1)
-  function grow(tbl2,stop)
+function tree.grow(tbl)
+  function grow(x,stop)
     local here,_,lefts,rights
-    here ={node=tbl2}
-    if #(tbl2.rows) > 2*stop then
-      _,_,lefts,rights = tbl1:halves(tbl2.rows)
-      here.lefts  = grow(tbl1:clone(lefts),stop)
-      here.rights = grow(tbl1:clone(rights),stop) end
+    here ={node=x}
+    if #(x.rows) > 2*stop then
+      _,_,lefts,rights = tbl:halves(x.rows)
+      here.lefts  = grow(tbl:clone(lefts),stop)
+      here.rights = grow(tbl:clone(rights),stop) end
     return here end
-  return grow(tbl1, (#tbl1.rows)^the.min) end
+  return grow(tbl, (#tbl.rows)^the.min) end
 ----------------------------------------------
 --   _  _|_   _.  _|_   _
 --  _>   |_  (_|   |_  _>
