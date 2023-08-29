@@ -18,8 +18,8 @@ USAGE:
 
 OPTIONS:
   -f --file file locaation = ../data/auto93.csv
-  -F --Far  distance to other pole = .9
-  -g --go  start up action = nothing
+  -F --Far distance to other pole = .9
+  -g --go  start p action = nothing
   -h --help do help = false
   -H --Halves how many to search = 256
   -m --min  min size = .5
