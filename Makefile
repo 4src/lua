@@ -10,3 +10,6 @@ html:
 	mv tmp1 ~/tmp/lib.html
 	cp ../config/docco.css $(HOME)/tmp
 	open $(HOME)/tmp/lib.html
+
+%.md : %.py
+	gawk 'NR>2 {sub(/--\[\[ ?/,""); sub(/]]--/,"") ; print $0} ' ez.lua > ez.md
