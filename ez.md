@@ -1,7 +1,7 @@
 
 # Easier AI
 
-(c) 2024 Tim Menzies, timm@ieee.org    
+&copy; 2024 Tim Menzies, timm@ieee.org    
 BSD-2 license. Share and enjoy.
 
 Some kinds of AI and very easy to script. Let me show you how.  For
@@ -25,7 +25,7 @@ code does some standard things, and then some very unstandanrd,
 novel and exciting things. For example, using membership query
 synthesis, this code implements explanation and active learning for
 multi-objective reasoning (where just a few dozen labels are enough
-to reason over 10,000s of examples).
+to reason over 10,000s of examples). $y=2^x$
 
 ## About the code
 

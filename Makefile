@@ -11,10 +11,21 @@ html:
 	cp ../config/docco.css $(HOME)/tmp
 	open $(HOME)/tmp/lib.html
 
-~/tmp/%.pdf : %.lua
-	echo 11
-	gawk 'NR>2 {sub(/--\[\[ ?/,""); sub(/]]--/,"") ; print $0} ' ez.lua > ez.md
-	pandoc -V fontsize=9pt \
-         --listings \
-         --highlight-style tango \
-         -V lang=lua -o $@  ez.md
+~/tmp/%.md : %.lua
+	echo 1
+	gawk -f lua2html.awk $^ > $@
+
+~/tmp/%.html : ~/tmp/%.md 
+	echo 2
+	cp arent.png ~/tmp
+	cp style2.css ~/tmp
+	pandoc --toc -c style2.css \
+	       --metadata title="Easeir AI"  \
+          -s --highlight-style tango  -o $@  $^
+
+# ~/tmp/%.html : %.lua
+# 	gawk 'NR>2 {sub(/--\[\[ ?/,""); sub(/]]--/,"") ; print $0} ' ez.lua > ez.md
+# 	pandoc --metadata title="Easeir AI" --listings \
+# 		 -s --mathml \
+#          --highlight-style tango \
+#          -V lang=lua -o $@  ez.md
