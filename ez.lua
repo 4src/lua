@@ -33,14 +33,27 @@ Since this code are showing off simplicity, we will use Lua for the
 implementation.  Lua is  easy to learm, is resource light, and
 compiles everywhere (for more on Lua see
 https://learnxinyminutes.com/docs/lua/).  The best way to learn
-this code is port it to Python, Julia, Java whatever is you favorite
+this code is port it to Python, Julia, Java or  whatever is you favorite
 language.
 
 Since this code is meant to show off things, this code has lots of
-`em.xxx` functions. Each of these can be called on the command line
-using (e.g.)
+`eg.xxx()` functions. Each of these can be called on the command line
+using, say:
 
     lua ez.lua -e klass      # calls the eg.klass() function
+
+Note that these `eg` examples can be used to guide your port to your favorite language.
+Your first step could be to get the first `eg` working, then the second, then the
+third etc. And at each step you could compare what you are getting to what comes out of my code.
+
+Finally, all the way 
+
+
+<p><i class="fa fa-users orange"></i> Here’s a hint for your software engineering project.</p>
+Knowledge Engineering and AI Hint
+html
+<p><i class="fa fa-robot blue"></i> Here’s a hint for your AI and
+
 
 ## About the code
 
@@ -89,7 +102,7 @@ sees those flags, it just flips the default values. :one:  ]]--
         v = tostring(v)
         for n,x in ipairs(arg) do
           if x=="-"..(k:sub(1,1)) or x=="--"..k then
-            d[k] = atom(v=="false" and "true" or v=="true" and "false" or arg[n+1]) end end 
+            d[k] = coerce(v=="false" and "true" or v=="true" and "false" or arg[n+1]) end end 
         if k=="seed" then math.randomseed(t[k]) end end end 
       return d
 
@@ -107,10 +120,10 @@ Reset the seed to some known value before calling important code._
 
 
 One small details: `cli` needs to convert strings to simple values
-(true, false, float or integer). This is handled by the `atom` function.
+(true, false, float or integer). This is handled by the `coerce` function.
 ]]--
 
-    function atom(s,    fun) --> atom
+    function coerce(s,    fun) --> atom
       fun = function(s) return s=="true" and true or (s ~= "false" and s) or false end
       return math.tointeger(s) or tonumber(s) or fun(s:match"^%s*(.-)%s*$") end
 
@@ -127,7 +140,7 @@ of that is a instance of that type (e.g. `num` is a NUM).
 and `any` denotes any thing at all. 
 
 For example, the 
-function `atom` (shown above) accepts a string and a function, a returns something
+function `coerce` (shown above) accepts a string and a function, a returns something
 of type atom.
 
 A suffix `s` denotes an array of things. E.g. `is` is an array of integers and 
@@ -142,10 +155,10 @@ can print themselves (with slots printed in sorted order),  using
 the `cat` function.  ]]--
 
     local new,cat
-    function new(kl,self) 
-      kl.__index=kl; kl.__tostring = cat; setmetatable(self,kl); return self end
+    function new(dKlass,d) --> d
+      dKlass.__index=dKlass; dKlass.__tostring = cat; setmetatable(d,dKlass); return d end
     
-    function cat(t,     u)
+    function cat(t,     u) --> s
       u={}; for k,v in pairs(t) do u[1+#u] = string.format(":%s %s",k,v) end
       table.sort(u)
       return "{" .. table.concat(u," ") .. "}" end
@@ -179,12 +192,12 @@ define various
 
     local DATA, COLS, NUM, SYM = {},{},{},{}
     
-    function NUM:new(at,txt) 
+    function NUM:new(at,txt)  --> num
       return new(NUM, {n=0, -- number of items seen in this column
                        at=at or 0,txt=txt or " ", 
                        mu=0, m2=0, sd=0}) end
     
-    function csv(fileName,fun,      src,s,cells)
+    function csv(fileName,fun,      src,s,cells) --> a  
       cells = function(s,    t)
         t={}; for s1 in s:gmatch("([^,]+)") do t[1+#t] = as(s1) end; return t end
       src = io.input(fileName)
