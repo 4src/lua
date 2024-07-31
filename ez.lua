@@ -27,7 +27,7 @@ Let me know happens  so I can add your fantastic new, and simple,
 idea to this code (and add you to the author list).
 
 For
-access to this file (ez.lua), see http://github.com/4src/lua.
+access to this file (ez.lua), see [github.com/4src/lua](http://github.com/4src/lua).
 
 Since this code are showing off simplicity, we will use Lua for the
 implementation.  Lua is  easy to learm, is resource light, and
@@ -41,13 +41,6 @@ Since this code is meant to show off things, this code has lots of
 using (e.g.)
 
     lua ez.lua -e klass      # calls the eg.klass() function
-
-Also, just to show that something cool is happenning here, this
-code does some standard things, and then some very unstandanrd,
-novel and exciting things. For example, using membership query
-synthesis, this code implements explanation and active learning for
-multi-objective reasoning (where just a few dozen labels are enough
-to reason over 10,000s of examples). $y=2^x$
 
 ## About the code
 
@@ -122,13 +115,14 @@ One small details: `cli` needs to convert strings to simple values
 
 --[[ ## Types Hints
 In this code, function arguments use a shorthand to specify type hints.
-My classes have constructor functions (e..g NUM) and any lowever case version
-of that is a instance of that type (e.g. `num` is a NUM).
 
-As to other types, 
+
+- My classes have constructor functions (e..g NUM) and any lowever case version
+of that is a instance of that type (e.g. `num` is a NUM).
+- As to other types, 
 `s`, `i`, `n`, `a`, `d` are strings, integers, numbers, arrays and dictionaries
-(the difference between arrays and dictionaries is that they have numeric and symbolic indexes, 
-respectively).  Also `fun` denotes a function, `atom` denotes any atomic thing,
+(and dictionaries have  symbolic keys),
+- Also `fun` denotes a function, `atom` denotes any atomic thing,
 and `any` denotes any thing at all. 
 
 For example, the 
