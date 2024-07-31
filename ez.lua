@@ -60,8 +60,8 @@ In Chapter four, we ..
 
 This code is controlled by the following options. 
 
-<i class="fa fa-lightbulb  good"></i> _Always store config settings  in a config object.
-Never bury "magic" config numbers in the code._  ]]--
+<i class="fa fa-lightbulb  good"></i>
+_Config params should not be  buried. Best to store them in config object. _  ]]--
 
 
     local the,cli,as
@@ -73,8 +73,8 @@ Never bury "magic" config numbers in the code._  ]]--
           }
 
 --[[ 
-<i class="fa fa-lightbulb  good"></i> _Always allow for modification to the config
-from the command line- this simplifies experimentation and optimization._ ]]--
+<i class="fa fa-lightbulb  good"></i>
+_To  simplifies experimentation and optimization, best to allow for config modification from the command line._ ]]--
 
 These options can be updated from the command-line using the
 `cli` function.  For each slot such as `seed`, the values can be updated
@@ -100,9 +100,10 @@ based  on  some seed.  By resetting the seed, a so-called "random" sequence
 will repeat. This is why we reset the seed whenever that flag is
 seen. 
 
-<i class="fa fa-skull-crossbones  bad"></i>  _It is bad practice to lose
-track of your random number seeds. Always take care to reset the seed before calling important code.
-And with any experimental result, also store the seed that generated it._
+<i class="fa fa-skull-crossbones  bad"></i>  _Do not lose track of your
+random number seeds. 
+With any experimental result, store the seed that generated it.
+Reset the seed to some known value before calling important code._
 
 
 One small details: `cli` needs to convert strings to simple values
