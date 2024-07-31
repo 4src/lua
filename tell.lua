@@ -1,6 +1,4 @@
---[[
-asdaasads
-]]--
+--[[ # Reasonably Simple Reasoning ]]--
 
     local map,cat,new
 
