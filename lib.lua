@@ -1,12 +1,12 @@
 #!/usr/bin/env lua
 -- <!-- vim : set et sts=2 sw=2 ts=2 : -->
--- In this code, in function argument lists, two spaces denotes "start of    
+-- In this code, in function argument lists, two spaces denotes "start of
 -- optional args" and four spaces denotes "start of local variables". Also:
 --
 -- | this   |=| reference to that |
 -- |-------:|-|-------------------|
--- | `t`    |=| table | 
--- | `n`    |=| number |  
+-- | `t`    |=| table |
+-- | `n`    |=| number |
 -- | `s`    |=| string |
 -- | `x`    |=| anything |
 -- | `k,v`  |=| key,value |
@@ -21,12 +21,12 @@ local lib={}
 -- ### Linting the code
 local b4={}; for k,_ in pairs(_ENV) do b4[k] = k end
 function lib.rogues()
-  for k,_ in pairs(_ENV) do if not b4[k] then 
+  for k,_ in pairs(_ENV) do if not b4[k] then
     io.stderr:write("-- warning: rogue local [",k,"]\n") end end end
 
--- ### Short-cuts   
+-- ### Short-cuts
 
--- A big number 
+-- A big number
 lib.big = 1E30
 -- emulate C's printf
 lib.fmt = string.format
@@ -41,10 +41,10 @@ function lib.rnd(n,  nPlaces,     mult)
 -- Generate random numbers.
 local Seed = 937162211
 -- Returns random integers `nlo` to `nhi`.
-function lib.rint(nlo,nhi)  
+function lib.rint(nlo,nhi)
   return math.floor(0.5 + lib.rand(nlo,nhi))  end
 -- Returns random floats `nlo` to `nhi` (defaults 0 to 1)
-function lib.rand(nlo,nhi) 
+function lib.rand(nlo,nhi)
   nlo,nhi=nlo or 0, nhi or 1
   Seed = (16807 * Seed) % 2147483647
   return nlo + (nhi-nlo) * Seed / 2147483647 end
@@ -56,9 +56,9 @@ function lib.same(x) return x end
 
 -- Returns a copy of `t` with all items filtered via `fun2` (where `fun2`
 -- accepts an item's index _and_ the item). If `fun2` returns two values,
--- use the second as the key for the new list (else just number the items 
+-- use the second as the key for the new list (else just number the items
 -- numerically).
-function lib.kap(t1,fun2,     t2) 
+function lib.kap(t1,fun2,     t2)
   t2={}; for k,v in pairs(t1 or {}) do v,k=fun2(k,v); t2[k or (1+#t2)]=v; end; return t2 end
 -- Returns a copy of `t` with all items filtered via `fun`.
 function lib.map(t, fun) return lib.kap(t, function(_,x) return fun(x) end) end
@@ -69,16 +69,15 @@ function lib.map(t, fun) return lib.kap(t, function(_,x) return fun(x) end) end
 function lib.list(t)
   return lib.map(t,lib.same) end
 
--- Sorts `t` using `fun`, returns `t`. 
-function lib.sorted(t,fun) 
+-- Sorts `t` using `fun`, returns `t`.
+function lib.sorted(t,fun)
   table.sort(t,fun)
   return t end
 
 -- Sorts `t` using the Schwartzian transform.
 function lib.keysort(t,fun)
-  return lib.map(lib.sorted(lib.map(t, function(x) return {x=x, fun=fun(x)} end),
-                   lib.lt"fun"),
-             function(pair) return pair.x end) end
+  return lib.map(lib.sorted(lib.map(t, function(x) return {x=x, fun=fun(x)} end), lib.lt"fun"),
+                 function(pair) return pair.x end) end
 
 -- Return a function that sorts ascending on slot `x`.
 function lib.lt(x) return function(t1,t2) return t1[x] < t2[x] end end
@@ -94,12 +93,12 @@ function lib.push(t,x) t[#t+1]=x; return x end
 -- Return any item from `t`.
 function lib.any(t) return t[lib.rint(1,#t)] end
 -- Return `n` items from `t`.
-function lib.many(t1,n,    t2) 
-  t2={}; for i=1,n do lib.push(t2, lib.any(t1)) end; return t2 end
+function lib.many(t1,n,    t2)
+  t2={}; for _=1,n do lib.push(t2, lib.any(t1)) end; return t2 end
 
 -- Return a portion of `t1`; go,stop,inc defaults to 1,#t1,1.
 -- Negative indexes are supported.
-function lib.slice(t1, nGo, nStop, nInc,    t2) 
+function lib.slice(t1, nGo, nStop, nInc,    t2)
   if nGo   and nGo   < 0 then nGo=#t1+nGo+1   end
   if nStop and nStop < 0 then nStop=#t1+nStop end
   t2={}
@@ -110,7 +109,7 @@ function lib.per(a,p) return a[p*#a//1] end
 -- ### Strings
 
 -- Return a string  showing `t`'s contents (recursively), sorting on the keys.
-function lib.o(t,     _fun,pre) 
+function lib.o(t,     _fun,pre)
   if type(t) ~= "table" then return tostring(t) end
   _fun = function(k,v) if k ~="^_" then return lib.fmt(":%s %s",k,lib.o(v)) end  end
   t = #t>0 and lib.map(t,lib.o) or lib.sorted(lib.kap(t,_fun))
@@ -134,20 +133,20 @@ function lib.cells(s,    t)
   t={}; for s1 in s:gmatch("([^,]+)") do t[1+#t] = lib.coerce(s1) end; return t end
 
 -- Run `fun` for all lines in a csv file `s` (where each line is divided on ",").
-function lib.csv(sFilename,fun,      src,s) 
+function lib.csv(sFilename,fun,      src,s)
   src = io.input(sFilename)
   while true do
     s = io.read(); if s then fun(lib.cells(s)) else return io.close(src) end end end
 
 -- Return `t`, updated from the command-line.  For `k,v` in
 -- `t`,if the command line mentions key `k` then change `s` to a new
--- value.  If the old value is a boolean, just flip the old. 
+-- value.  If the old value is a boolean, just flip the old.
 function lib.cli(t)
   for k,v in pairs(t) do
     v = tostring(v)
     for n,x in ipairs(arg) do
       if x=="-"..(k:sub(1,1)) or x=="--"..k then
-        v = v=="false" and "true" or v=="true" and "false" or arg[n+1] end end 
+        v = v=="false" and "true" or v=="true" and "false" or arg[n+1] end end
     t[k] = lib.coerce(v) end
   return t end
 
@@ -162,29 +161,29 @@ function lib.settings(s,       t)
 
 -- Create a klass and a constructor and a print method
 local id=0
-function lib.obj(s,    t) 
+function lib.obj(s,    t)
   t = {}
   t.__index = t
-  return setmetatable(t, {__tostring=lib.o, __call=function(_,...) 
+  return setmetatable(t, {__tostring=lib.o, __call=function(_,...)
     id = id + 1
-    local self=setmetatable({a=s,id=id},t); 
+    local self=setmetatable({a=s,id=id},t);
     return setmetatable(t.init(self,...) or self,t) end}) end
 
 -- ### Test Engine
 
--- Show the help (if asked to).  Run one test, or if the test is `all`, 
+-- Show the help (if asked to).  Run one test, or if the test is `all`,
 -- then run all (printing "FAIL" or "PASS" as you go).  Check for stray i
--- globals.  Return to the operating system the number of failures 
+-- globals.  Return to the operating system the number of failures
 -- (so zero means "everything is ok").
-function lib.run(settings,egs,     fails,old,report,good,bad,missing,reset)
+function lib.run(settings,egs,     fails,old,report,good,bad,reset)
   fails, old = 0, {}
   for k,v in pairs(settings) do old[k]=v end
   report=  function()       print("🔆 fails=",fails) end
-  good=    function(s)      print("✅ PASS ",s) end 
-  bad=     function(s,msg)  print("❌ FAIL : ",s,msg or "") 
+  good=    function(s)      print("✅ PASS ",s) end
+  bad=     function(s,msg)  print("❌ FAIL : ",s,msg or "")
                             fails = fails + 1 end
-  missing= function(s)      print("?? unknown ",s) end
-  reset=   function()       for k,v in pairs(old) do settings[k]=v end  
+  --missing= function(s)      print("?? unknown ",s) end
+  reset=   function()       for k,v in pairs(old) do settings[k]=v end
                             Seed = settings.seed
                             math.randomseed(Seed) end
   for _,s in pairs(egs.all) do
@@ -197,10 +196,10 @@ function lib.run(settings,egs,     fails,old,report,good,bad,missing,reset)
   lib.rogues()
   os.exit(fails) end
 
-function lib.go(help,the,egs,actions)
-  if not pcall(debug.getlocal,5,1) then 
+function lib.go(help,the,egs)
+  if not pcall(debug.getlocal,5,1) then
      the=lib.cli(the)
-     if the.help then print(help) 
+     if the.help then print(help)
      else lib.run(the,egs) end end end
 
 return lib
