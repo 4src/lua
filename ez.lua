@@ -16,8 +16,8 @@ sequential model optimization and
 membership query synthesis. 
 
 Sounds complicated, right?  But it ain't. In fact, as shown below,
-all the above is just a hundred lines of code (caveat: if you are using
-a sensible underlying object model). 
+all the above is just a hundred lines of code (caveat: provided  you are using
+the right  underlying object model). 
 
 Which raised the question: what
 else is similarly  simple? How many of our complex problems... aren't?
@@ -66,20 +66,31 @@ In Chapter four, we ..
 ## Chapter 1: Preamble 
 
 This code is controlled by the following options. 
-These options can be updated from the command-line using the
-`cli` function.  eFor each slot `xxx`, the values can be updated
-on by a flag `-x` or `--xxx`. `cli` expects a command-line value
-for each flag--.  except for the flags of boolean values.  If `cli`
-sees those flags, it just flips the default values. ]]--
+
+<i class="fa fa-lightbulb  good"></i> _Always store config settings  in a config object.
+Never bury "magic" config numbers in the code._  ]]--
+
 
     local the,cli,as
-    
     the = {eg    = "the",      -- start-up action
            p     = 2,          -- coeffecient on distance function
            seed  = 1234567891, -- random number seed
-           train = "data/misc/auto93.csv" -- where to read data
+           train = "data/misc/auto93.csv", -- where to read data
+           verbose = false
           }
-    
+
+--[[ 
+<i class="fa fa-lightbulb  good"></i> _Always allow for modification to the config
+from the command line- this simplifies experimentation and optimization._ ]]--
+
+These options can be updated from the command-line using the
+`cli` function.  For each slot such as `seed`, the values can be updated
+on the command line by flag `-s arg` or `--seed arg`. `cli` expects a aergument for
+everyhing except for boolean slots. For such booleans, if this function sees (e.g.) `--verbose`
+the it just flips the default value (which, in this case would set `the.verbose=true`),
+for each flag--.  except for the flags of boolean values.  If `cli`
+sees those flags, it just flips the default values. :one:  ]]--
+
     function cli(d) --> d
       for k,v in pairs(d) do
         v = tostring(v)
@@ -94,7 +105,12 @@ debugging purposes, it is  useful to be replay anything choosen
 stochastically.  So computers use random number generators that are
 based  on  some seed.  By resetting the seed, a so-called "random" sequence
 will repeat. This is why we reset the seed whenever that flag is
-seen.
+seen. 
+
+<i class="fa fa-skull-crossbones  bad"></i>  _It is bad practice to lose
+track of your random number seeds. Always take care to reset the seed before calling important code.
+And with any experimental result, also store the seed that generated it._
+
 
 One small details: `cli` needs to convert strings to simple values
 (true, false, float or integer). This is handled by the `atom` function.
@@ -131,7 +147,6 @@ can print themselves (with slots printed in sorted order),  using
 the `cat` function.  ]]--
 
     local new,cat
-    
     function new(kl,self) 
       kl.__index=kl; kl.__tostring = cat; setmetatable(self,kl); return self end
     
