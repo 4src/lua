@@ -11,5 +11,10 @@ html:
 	cp ../config/docco.css $(HOME)/tmp
 	open $(HOME)/tmp/lib.html
 
-%.md : %.py
+~/tmp/%.pdf : %.lua
+	echo 11
 	gawk 'NR>2 {sub(/--\[\[ ?/,""); sub(/]]--/,"") ; print $0} ' ez.lua > ez.md
+	pandoc -V fontsize=9pt \
+         --listings \
+         --highlight-style tango \
+         -V lang=lua -o $@  ez.md
