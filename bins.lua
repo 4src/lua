@@ -18,7 +18,7 @@ function main(rows, get, put)
         if get(v[i+1]) - get(row) > (s.hi - s.lo)/100 then
           if get(row) - cut >= s.sd*the.cohen then
             cut = get(row)
-            cuts[cut] = 0 end end end end
+            cuts[cut] = 0  end end end end
     cuts[cut] = cuts[cut] + 1 
-    put(row,cut) end
+    put(row,cut) end 
   return cuts end
