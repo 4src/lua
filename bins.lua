@@ -1,28 +1,24 @@
 the={cohen=0.35, bins=17}
 
-fction stats(rows,f,    v,n) 
-  q = function(x) return x=="?" and -1E32 or x end
-  table.sort(rows, function(row1,row2) return q(f(row1)) < q(f(row2)) end)
+function stats(rows,get,    v,n) 
   u,v = {},{}
-  for i,row in pairs(rows) do
-    if f(row) == "?" then push(u,row) else push(v,row) end end
+  for i,row in pairs(rows) do push(get(row) == "?" and u or v, row) end
+  table.sort(v, function(row1,row2) return get(row1) < get(row2) end)
   n = #v // 10
-  return u, v, f(v[5*n]), (f(v[9*n])-f(v[n]))/2.56 end
+  return {u=u, v=v, lo=get(v[1]), hi=get(v[#v]), 
+          mid=get(v[5*n]), sd=(get(v[9*n])-get(v[n]))/2.56} end
  
-function main(rows, col, x)
-  local cut,cuts,njump,trivial,n,epsilon
-  local f = function(row) return row[col] end
-  u, v,mid,sd           = stats(rows,f)
-  epsilon               = (v[#v] - v[1]) / 100
-  cut, cuts, njump      = v[1], {}, #v/(the.bins - 1) // 1
-  cuts[cut], n, trivial = njump,njump, sd * the.cohen
-  while n <= #v do
-    if f(v[n+1])  - f(v[n]) > epsilon and f(v[n]) - cut >= trivial then
-      cut = f(v[n])
-      cuts[cut] = 0
-    else
-      cuts[cut] = cuts[cut] + 1 
-      row[col]  = cut
-    end
-    n = n + 1 end 
+function main(rows, get, put)
+  local cuts, s = {}, stats(rows,get)
+  local cut = s.lo
+  cuts[cut] = 0
+  for i,row in pairs(v) do
+    if i < #v - #v/the.bins then
+      if cuts[cut] >= #v/the.bins then 
+        if get(v[i+1]) - get(row) > (s.hi - s.lo)/100 then
+          if get(row) - cut >= s.sd*the.cohen then
+            cut = get(row)
+            cuts[cut] = 0 end end end end
+    cuts[cut] = cuts[cut] + 1 
+    put(row,cut) end
   return cuts end
