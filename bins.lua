@@ -1,26 +1,28 @@
-the={cohen=0.35}
+the={cohen=0.35, bins=17}
 
-function stats(rows,fun,    val,n) 
-  val = function(x) return x=="?" and -1E32 or x end
-  table.sort(rows, function(row1,row2) return val(fun(row1)) < val(fun(row2)) end)
+fction stats(rows,f,    v,n) 
+  q = function(x) return x=="?" and -1E32 or x end
+  table.sort(rows, function(row1,row2) return q(f(row1)) < q(f(row2)) end)
+  u,v = {},{}
   for i,row in pairs(rows) do
-    if i ~= "?" then
-      n = (#t - i) // 10
-      return i, rows, fun(rows[i]), funs(rows[#rows]), \
-                fun(rows[i+5*n]),  (fun(rows[i+9*n]) - fun(row[i+n])) / 2.56 end
+    if f(row) == "?" then push(u,row) else push(v,row) end end
+  n = #v // 10
+  return u, v, f(v[5*n]), (f(v[9*n])-f(v[n]))/2.56 end
  
-function stats.cuts(rows, x)
-    local cut,bins,njump,trivial,n,epsilon
-    n,rows,lo,hi,mid,sd  = stats(rows)
-    epsilon = (hi - lo) / 100
-    cut,bins,njump =  t[n], {}, (#t -n)/(the.bins - 1) // 1
-    bins[cut], n, trivial = njump,njump, stats.sd(t) * the.cohen
-    while n <= #t  - numb do
-      if  t[n+1]  - t[n] > epsilon and t[n] - cut >= trivial then
-         cut = t[n]
-         bins[cut] = njump
-         n = n + njump
-      else
-         bins[cut] = bins[cut] + 1
-         n = n + 1 end end
-    return bins end
+function main(rows, col, x)
+  local cut,cuts,njump,trivial,n,epsilon
+  local f = function(row) return row[col] end
+  u, v,mid,sd           = stats(rows,f)
+  epsilon               = (v[#v] - v[1]) / 100
+  cut, cuts, njump      = v[1], {}, #v/(the.bins - 1) // 1
+  cuts[cut], n, trivial = njump,njump, sd * the.cohen
+  while n <= #v do
+    if f(v[n+1])  - f(v[n]) > epsilon and f(v[n]) - cut >= trivial then
+      cut = f(v[n])
+      cuts[cut] = 0
+    else
+      cuts[cut] = cuts[cut] + 1 
+      row[col]  = cut
+    end
+    n = n + 1 end 
+  return cuts end
