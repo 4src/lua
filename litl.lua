@@ -1,6 +1,6 @@
 #!/usr/bin/env lua
 -- vim : set ts=2 sw=2 sts=2 et : 
-local the,help={},[[
+local help=[[
 litl.lua: a little data goes a long way
 (c) 2024 Tim Menzies, <timm@ieee.org>, BSD-2
 
@@ -16,8 +16,9 @@ OPTIONS:
   -S Samples int     random number seed =  512
   -t train   file    csv data file      =  ../../timm/moot/optimize/misc/auto93.csv]]
 
-local DATA,BIN,COLS,ROW,SYM,NUM,go = {},{},{},{},{},{},{}
 local cells, coerce, csv, fmt, new, o, oo, push, sort
+local the,go = {},{}
+local DATA,BIN,COLS,ROW,SYM,NUM = {},{},{},{},{},{}
 -- ----------------------------------------------------------------------------
 -- Objects
 function new(klass,obj) klass.__index=klass; return setmetatable(obj,klass) end
