@@ -1,6 +1,6 @@
 #!/usr/bin/env lua
 -- vim : set ts=2 sw=2 sts=2 et : 
--- --[ todo
+--[[ todo
 hooking up now toe enxt and net.loast back tos elf if non nil next fshoul dbe a connect method
 
 predict should be a general method since sym will need it too. as doe sthe find max rotine
@@ -182,9 +182,12 @@ function BIN:new(col,b4)
   self = new(BIN,{n=0, at=col.at, txt=col.txt, lo=1E32, seen={},
                   symp=getmetatable(col)==SYM })
   if b4 then
-    self.last = b4
-    b4.next = self end
+    self.last:connect(self) end
   return self end
+
+function BIN:connect(next)
+  self.next = next
+  if self.next then self.next.last = self end end
 
 function BIN:add(x,y,n)
   self.lo      = math.min(x, self.lo)
@@ -197,7 +200,7 @@ function BIN:predict(    out,most,n,tmp)
     n   = 0
     for k2,n2 in pairs(self.seen) do if k2 ~= k1 then n = n + n2 end
     tmp = y^2 / (y+n)
-    if tmp > most then most,out = tmp,k1 end end
+    if tmp > most then most,out = tmp,k1 end end end
   return out,most end
 
 function BIN:merge(smallEffect, frequent)
