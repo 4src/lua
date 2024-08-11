@@ -1,5 +1,16 @@
 #!/usr/bin/env lua
 -- vim : set ts=2 sw=2 sts=2 et : 
+-- --[ todo
+hooking up now toe enxt and net.loast back tos elf if non nil next fshoul dbe a connect method
+
+predict should be a general method since sym will need it too. as doe sthe find max rotine
+
+o bins should return first cut and best cut
+
+ erge bns if the prediction of the merge same asnthe prediction of the part
+   o
+   get rid of the next/last pointers. merge makes a new list. simpler
+--]]
 local help=[[
 litl.lua: a little data goes a long way
 (c) 2024 Tim Menzies, <timm@ieee.org>, BSD-2
@@ -16,7 +27,7 @@ OPTIONS:
   -S Samples int     random number seed =  512
   -t train   file    csv data file      =  ../../timm/moot/optimize/misc/auto93.csv]]
 
-local cells, coerce, csv, fmt, new, o, oo, push, sort
+local cells, is, csv, fmt, new, o, oo, push, sort
 local the,go = {},{}
 local DATA,BIN,COLS,ROW,SYM,NUM = {},{},{},{},{},{}
 -- ----------------------------------------------------------------------------
@@ -45,21 +56,23 @@ function o(x,    u)
   return "{" .. table.concat(u,", ") .. "}" end 
 
 -- String to thing(s)
-function coerce(s,    fun)
-  function fun(s) return s=="true" and true or (s ~= "false" and s) or false end
+function is(s,     fun)
+  function fun(s) return s==nil and nil or 
+                         s=="true" and true or 
+                         s ~= "false" and s
+                         or false end
   return math.tointeger(s) or tonumber(s) or fun(s:match"^%s*(.-)%s*$") end
 
 function csv(sFilename,fun,      src,s,cells)
   function cells(s,    t) 
-    t={}; for s1 in s:gmatch("([^,]+)") do t[1+#t]=coerce(s1) end; return t end
+    t={}; for s1 in s:gmatch("([^,]+)") do t[1+#t]=is(s1) end; return t end
   src = io.input(sFilename)
   while true do
     s = io.read()
     if s then fun(cells(s)) else return io.close(src) end end end
 
 function settings(t,s)
-  s:gsub("\n[%s]+[-][%S][%s]+([%S]+)[^\n]+=[%s]+([%S]+)",
-         function(k,v) t[k]=coerce(v) end) end
+  s:gsub("\n[%s]+[-][%S][%s]+([%S]+)[^\n]+=[%s]+([%S]+)",function(k,v) t[k]=is(v) end) end
 
 settings(the, help)
 -- ----------------------------------------------------------------------------
@@ -235,4 +248,4 @@ go.bins= function(_)
 
 for j,s in pairs(arg) do
   math.randomseed(the.seed)
-  if go[s:sub(2)] then go[s:sub(2)](coerce(arg[j+1] or "")) end end 
+  if go[s:sub(2)] then go[s:sub(2)](is(arg[j+1] or "")) end end 
