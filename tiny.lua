@@ -64,36 +64,38 @@ function settings(t,s)
 settings(the, help)
 -- ----------------------------------------------------------------------------
 function SYM:new(at,txt)
-  return new(SYM,{n=0,at=at,txt=txt,has={},most=0,mode=nil}) end
+  return new(SYM, {n=0, at=at, txt=txt, bins={},
+                   seen={}, most=0, mode=nil}) end
 
 function SYM:add(x) 
   if x~="?" then 
     self.n = self.n + 1
-    self.has[x] = (self.has[x] or 0) + 1
-    if self.has[x] > self.most then
-      self.most, self.mode = self.has[x], x end end 
+    self.seen[x] = (self.seen[x] or 0) + 1
+    if self.seen[x] > self.most then
+      self.most, self.mode = self.seen[x], x end end 
   return x end
 
 function SYM:mid() return self.mode end
 function SYM:div(      e)
-  e=0; for _,n in pairs(self.has) do e=e- n/self.n * math.log(n/self.n,2) end
+  e=0; for _,n in pairs(self.seen) do e=e- n/self.n * math.log(n/self.n,2) end
   return e end
 -- ----------------------------------------------------------------------------
 function NUM:new(at,txt)
-  return new(NUM, {n=0, at=at, txt=txt, lo=1E32, hi=-1E32, 
+  return new(NUM, {n=0, at=at, txt=txt, bins={},
+                   lo=1E32, hi=-1E32, 
                    goal=tostring(txt):find"-$" and 0 or 1,
-                   _has={}, ok=false}) end
+                   _seen={}, ok=false}) end
 
 function NUM:add(x,     pos)
   if x ~="?" then 
     self.n  = self.n + 1
     self.lo = math.min(x,self.lo)
     self.hi = math.max(x,self.hi)
-    if #self._has < the.Samples then pos = 1 + (#self._has) 
-    elseif math.random() < the.Samples/self.n then pos=math.random(#self._has) end
+    if #self._seen < the.Samples then pos = 1 + (#self._seen) 
+    elseif math.random() < the.Samples/self.n then pos=math.random(#self._seen) end
     if pos then 
       self.ok = false 
-      self._has[pos] = v end end 
+      self._seen[pos] = v end end 
   return x end
 
 function NUM:norm(x)
@@ -101,8 +103,8 @@ function NUM:norm(x)
   return (x-self.lo)/ (self.hi - self.lo + 1E-32) end
 
 function NUM:has()
-  if not self.ok then table.sort(self._has); self.ok=true end
-  return self._has end
+  if not self.ok then table.sort(self._seen); self.ok=true end
+  return self._seen end
 
 function NUM:mid() return self:per(.5) end
 function NUM:div() return (self:per(.9) - self:per(.1)) / 2.56 end
@@ -149,69 +151,68 @@ function DATA:sort(f,n)
   f = function(row) return self.cols:chebyshev(row) end
   self.rows = sort(self.rows, function(a,b) return f(a) < f(b) end) 
   n = (#self.rows)^the.Best // 1 
-  return self, f( self.rows[n] ) end 
+  return self, f( self.rows[n] ) end
 
-function DATA:allBins(      x,border)
-  f= function(row) return self.cols:chebyshev(row) end
-  _,border = self:sort()
-	for _,n in pairs{0.1,0.2,0.3,0.4,0.5,0.7,0.9} do
-	  print(n, f( self.rows[ (n*#self.rows)//1   ])) end
-	
-  for c,_ in pairs(self.cols.x) do
-    x =  self:bins(self.rows, function(row) return row[c] end,
-		               function(row) return self.cols:chebyshev(row) < border end)
-		print("")
-		for _,y in pairs(x) do print(c, y.lo,y.n,  o(y.seen)) end
-									 end end
-
-function DATA:bins(rows,xfun,yfun,     my,bins)
-  my, rows = self:my(self:sortedRows(rows,xfun), xfun, yfun)
-  bins = { BIN:new(xfun(rows[1])) }
-  for r,row in pairs(rows) do
-    if r >= my.start 
-    then self:theCurrentBin(my,r,xfun(row),rows,bins,xfun)
-             :add( yfun(row), my.seen) end end
-  return bins end
-
-function DATA:theCurrentBin(my,r,x,rows,bins,xfun)
-  if r < #rows - my.gap then
-    if x ~= xfun( rows[r+1] )  then
-      if bins[#bins].n >= my.gap then  
-        if x - bins[#bins].lo >= my.sd*the.cohen then 
-          push(bins, BIN:new(x,bins[#bins])) end end end end
-  return bins[#bins] end
-
-function DATA:sortedRows(rows,xfun,       q)
-  q = function(row) return xfun(row)=="?" and -1E32 or xfun(row)  end
-  return sort(rows, function(row1,row2) return q(row1) < q(row2) end) end
-
-function DATA:my(rows,xfun,yfun,      seen,x,y,n,start) 
-  seen={}
-  for r,row in pairs(rows) do
-    x,y = xfun(row), yfun(row)
-    if x ~= "?" then 
-      start = start or r
-      seen[y] = 1 + (seen[y] or 0) end end 
-	print("start",start)
-  n = #rows - start 
-  ninety = xfun(rows[(start+ .9*n)//1]) 
-	ten    = xfun(rows[(start+ .1*n)//1])   
-  return {start= start, 
-          seen = seen,
-          gap  = (n / the.bins) //1,
-          sd   = (ninety - ten)/2.56
-         }, rows end  
+function NUM:contrast(klasses,     x,b)
+  for i=1,the.bins do 
+    self.bins[i]=BIN:new(self,false, bins[i-1]) end
+  for klass,rows in pairs(klass) do
+    for _,row in pairs(rows) do
+      x = row[self.at]
+      if x ~= "?" then
+        b = (.5 + (x - self.lo) / s(elf.hi - self.lo)) // 1
+        self.bins[b]:add(x, klass, 1/#rows)  end end end
+  return bins[1]:merged(i:div()*the.cohen, i.n/the.bins) end
+  
 -- ----------------------------------------------------------------------------
-function BIN:new(x,b4)
-  self = new(BIN,{n=0, lo=x, seen={}})
+function BIN:new(col,b4)
+  self = new(BIN,{n=0, at=col.at, txt=col.txt, lo=1E32, seen={},
+                  symp=getmetatable(col)==SYM })
   if b4 then
     self.last = b4
     b4.next = self end
   return self end
 
-function BIN:add(y,ys)
-  self.seen[y] = (self.seen[y] or 0) + 1/ys[y]
-  self.n = self.n + 1 end
+function BIN:add(x,y,n)
+  self.lo      = math.min(x, self.lo)
+  self.seen[y] = (self.seen[y] or 0) + n 
+  self.n       = self.n + 1 end
+
+function BIN:predict(    out,most,n,tmp)
+  most = -1
+  for k1,y in pairs(self.seen) do
+    n   = 0
+    for k2,n2 in pairs(self.seen) do if k2 ~= k1 then n = n + n2 end
+    tmp = y^2 / (y+n)
+    if tmp > most then most,out = tmp,k1 end end
+  return out,most end
+
+function BIN:merge(smallEffect, frequent)
+  if self.next then
+    if self.n < frequent then return true end
+    if self.next.lo - self.lo < smallEffect then return true end
+    if self:predict() == self.next:predict() then return true end end end
+
+function BIN:merged(...)
+  if self:merge(...)
+  then 
+    self.n = self.n + self.next.n
+    for k,n in pairs(self.next.seen) do
+      self.seen[k] = (self.seen[k] or 0) + n end
+    self.next      = self.next.next
+    if self.next then self.next.last = self end
+    self:merged(...) 
+  end
+  return self end
+
+function BIN:selects(row,      x)
+  x = row[self.at]
+  if x == "?"         then return true end
+  if self.symp        then return x==self.lo end 
+  if self.next == nil then return self.lo <= x end
+  if self.last == nil then return x < self.next.lo end 
+  return self.lo <= x < self.next.lo end
+
 -- ----------------------------------------------------------------------------
 go.h   = function(_) print("\n" .. help) end
 go.c   = function(x) the.cohen = x end
