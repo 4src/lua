@@ -95,10 +95,14 @@ function best(t,...)
     tmp = score(k,...)
     if tmp > most then most,out=tmp,k end end
   return out,most end
+
+function cdf(x,mu,sd,     z,fun)
+  fun = function(z) return 1 - 0.5*math.exp(1)^(-0.717*z - 0.416*z*z) end
+  z = (x - mu)/sd
+  return z >= 0 and fun(z) or 1 - fun(-z) end
 -- ----------------------------------------------------------------------------
 function NUM:new(at,txt)
-  return new(NUM, {n=0, at=at, txt=txt, 
-                   lo=1E32, hi=-1E32, mu=0,m2=0,sd=0,
+  return new(NUM, {n=0, at=at, txt=txt, lo=1E32, hi=-1E32, mu=0,m2=0,sd=0,
                    goal=tostring(txt):find"-$" and 0 or 1}) end
 
 function NUM:add(x,     d)
@@ -110,14 +114,17 @@ function NUM:add(x,     d)
   self.m2 = self.m2 + d*(x-self.mu)
   self.sd = self.n < 2 and 0 or (self.m2/(self.n - 1))^0.5 end 
 
+-- negaction flip is wrong
 function NUM.overlap(i,j)
   if i.mu > j.mu then i.j = j,i end
   a = 1/(2*i.sd^2)        - 1/(2*i.sd^2)
   b = j.mu/(i.sd^2)       - i.mu/(i.sd^2)
   c = i.mu^2 /(2*i.sd^2) - j.mu^2 / (2*i.sd^2) - math.log(i.sd/i.sd)
-  r1= (-b - (b^2 - 4*a*c)^.5)/(2*a)
-  r2= (-b + (b^2 - 4*a*c)^.5)/(2*a)
-  return r1,r2 end
+  x1= (-b - (b^2 - 4*a*c)^.5)/(2*a)
+  x2= (-b + (b^2 - 4*a*c)^.5)/(2*a)
+  cdf1=cdf(x1,i.mu,i.sd)
+  cdf2=cdf(x2,i.mu,i.sd)
+  return cdf2 - cdf1, x1,x2 end
 
 function NUM:norm(x)
   return x=="?" and x or (x-self.lo)/ (self.hi - self.lo + 1E-32) end
