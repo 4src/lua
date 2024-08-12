@@ -75,15 +75,33 @@ function settings(t,s)
   s:gsub("\n[%s]+[-][%S][%s]+([%S]+)[^\n]+=[%s]+([%S]+)",function(k,v) t[k]=is(v) end) end
 
 settings(the, help)
+
+-- Distributions
+
+function mergeds(b4,...)
+  local i,now = i,{}
+  while i <= #b4 do
+    a = b4[i]
+    if i < #b4 then
+      b = b4[i+1]
+      if a.x:merge(b.x,...) or a.y:merge(b.y,...) then
+        a.x = a.x:merged(b.x)
+        a.y = a.y:merged(b.y)
+        i = i + 1 end end
+    now[#now] = a
+    i = i + 1 end
+  return #now == #b4 and b4 or merged(b4,...) end 
+
 -- ----------------------------------------------------------------------------
 function SYM:new(at,txt)
-  return new(SYM, {n=0, at=at, txt=txt, bins={},
+  return new(SYM, {n=0, at=at, txt=txt, range={},
                    seen={}, most=0, mode=nil}) end
 
-function SYM:add(x) 
+function SYM:add(x,n) 
   if x~="?" then 
-    self.n = self.n + 1
-    self.seen[x] = (self.seen[x] or 0) + 1
+    n = n or 1
+    self.n = self.n + n
+    self.seen[x] = (self.seen[x] or 0) + n
     if self.seen[x] > self.most then
       self.most, self.mode = self.seen[x], x end end 
   return x end
@@ -92,23 +110,47 @@ function SYM:mid() return self.mode end
 function SYM:div(      e)
   e=0; for _,n in pairs(self.seen) do e=e- n/self.n * math.log(n/self.n,2) end
   return e end
+
+function SYM:merged(i,j,      k)
+  k = SYM:new(i.at, i.txt)
+  for _,tmp in pairs{i,j} do
+    for x,n in pairs(tmp.seen) do k:add(x,n) end end 
+  return k end 
+
+function SYM.merge(i,j,_,__,Y,N,      k)        
+  k = i:merge(j)
+  return  k and k:best(Y,N) == i:best(Y,N) == j:best(Y,N) end
+
+function SYM:score(goal, Y, N)
+  for k,v in pairs(self.seen) do
+    if k == goal then y = y + v else n = n + v end end
+  y = y/(Y+ 1E-32)
+  n = n/(N+ 1E-32)
+  return y^2/(y+n) end 
+
+function SYM:best(Y,N,     score,most,out)
+  most = - 1
+  for k,_ in pairs(self.seen) do
+    score = self:score(k,Y,N)
+    if score > most then most,out=score,k end end
+  return out,most end
 -- ----------------------------------------------------------------------------
 function NUM:new(at,txt)
-  return new(NUM, {n=0, at=at, txt=txt, bins={},
+  return new(NUM, {n=0, at=at, txt=txt, range={},
                    lo=1E32, hi=-1E32, 
                    goal=tostring(txt):find"-$" and 0 or 1,
-                   _seen={}, ok=false}) end
+                   seen={}, ok=false}) end
 
 function NUM:add(x,     pos)
   if x ~="?" then 
     self.n  = self.n + 1
     self.lo = math.min(x,self.lo)
     self.hi = math.max(x,self.hi)
-    if #self._seen < the.Samples then pos = 1 + (#self._seen) 
-    elseif math.random() < the.Samples/self.n then pos=math.random(#self._seen) end
+    if #self.seen < the.Samples then pos = 1 + (#self.seen) 
+    elseif math.random() < the.Samples/self.n then pos=math.random(#self.seen) end
     if pos then 
       self.ok = false 
-      self._seen[pos] = v end end 
+      self.seen[pos] = v end end 
   return x end
 
 function NUM:norm(x)
@@ -116,8 +158,8 @@ function NUM:norm(x)
   return (x-self.lo)/ (self.hi - self.lo + 1E-32) end
 
 function NUM:has()
-  if not self.ok then table.sort(self._seen); self.ok=true end
-  return self._seen end
+  if not self.ok then table.sort(self.seen); self.ok=true end
+  return self.seen end
 
 function NUM:mid() return self:per(.5) end
 function NUM:div() return (self:per(.9) - self:per(.1)) / 2.56 end
@@ -126,6 +168,19 @@ function NUM:per(p,    a)
   a=self:has()
   return a[math.min(#a, math.max(1, (p*#a) // 1))] end
 
+function NUM:merged(i,j,      k)
+  k =NUM:new(i.at, i.txt)
+  for _,tmp in pairs{i,j} do
+    k:add(tmp.lo) 
+    k:add(tmp.hi) 
+    for _,n in pairs(tmp.seen) do k:add(n) end end 
+  return k end 
+
+function NUM.merge(i,j,silly,rare,_,__) 
+  return (i.hi - i.lo <= silly or i.n < rare) or
+         (j.hi - j.lo <= silly or j.n < rare)  end
+
+-- ----------------------------------------------------------------------------
 function COLS:new(names)
   self = new(COLS,{names=names, x={}, y={}, all={}})
   for c,s in pairs(self.names) do
