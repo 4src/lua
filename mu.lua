@@ -40,6 +40,15 @@ local function shuffle(t,    j)
   for i = #t, 2, -1 do j = math.random(i); t[i], t[j] = t[j], t[i] end
   return t end
 
+-- Mathis
+function normal(mu,sd)
+  while true do
+    x1 = 2.0 * math.random() - 1
+    x2 = 2.0 * math.random() - 1
+    w  = x1*x1 + x2*x2
+    if w < 1 then
+      return mu + sd * x1 * ((-2*math.log(w))/w)^0.5 end end end
+
 -- Thing to string
 local fmt = string.format
 
@@ -114,6 +123,7 @@ function NUM.contrast(i,j)
 
 function NUM:div() return self.sd end
 
+
 function NUM:mid() return self.mu end
 
 function NUM:norm(x)
@@ -178,6 +188,12 @@ go.num  = function(_, n)
             n=NUM:new(); for i=1,100 do n:add(math.random()^.5) end 
             assert(0.71 < n:mid() and n:mid() < 0.72)
             assert(0.22 < n:div() and n:div() < 0.23) end
+
+go.normal  =function(_, n)
+              t={}; for i=1,1000 do x=normal(10,2) // 1; t[x]=(t[x] or 0) + 1 end
+              for i = 4,16 do
+                n = t[i] or 0
+                print(i,n,("*"):rep(n//10)) end end
 
 go.sym  = function(_, s)
             s=SYM:new(); for _,x in pairs{"a","a","a","a","b","b","c"} do s:add(x) end
