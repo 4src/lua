@@ -1,5 +1,7 @@
 #!/usr/bin/env lua
--- vim : set ts=2 sw=2 sts=2 et : 
+-- <!-- vim : set ts=2 sw=2 sts=2 et : --> 
+
+-- ## Settings
 local go,the,help={},{},[[
 mu.lua: a little data goes a long way
 (c) 2024 Tim Menzies, <timm@ieee.org>, BSD-2
@@ -8,23 +10,27 @@ USAGE:
   lua litl.lua [-h] [-[bBcst] ARG] 
 
 OPTIONS:
-  -B Best    float   best size           =  .5
-  -c cohen   float   cohen small effect  =  .35
-  -h                 show help 
-  -s seed    int     random number seed  =  1234567891
-  -S Samples int     random number seed  =  512
-  -t train   file    csv data file       =  ../../timm/moot/optimize/misc/auto93.csv]]
+  -B Best    best size           =  .5
+  -c cohen   cohen small effect  =  .35
+  -h         show help 
+  -s seed    random number seed  =  1234567891
+  -S Samples random number seed  =  512
+  -t train   csv data file       =  ../../timm/moot/optimize/misc/auto93.csv]]
 
--- --------------------------------------------------------------------------------------
--- String to thing(s)
+-- ## Lib
+-- ### String to thing(s)
+
+-- Simple coerce (assumes booleans, nil, ints, floatss or strings)
 local function coerce(s,     fun)
   function fun(s) return s==nil and nil or s=="true" and true or s ~= "false" and s end
   if type(s) ~= "string" then return s end
   return math.tointeger(s) or tonumber(s) or fun(s:match"^%s*(.-)%s*$") end
 
+-- Parse settings from `help` into `the`.
 help:gsub("\n[%s]+[-][%S][%s]+([%S]+)[^\n]+=[%s]+([%S]+)", 
           function(k,v) the[k] = coerce(v) end)
 
+-- Read csv, coerce cells
 local function csv(sFilename,fun,      src,s,cells)
   function cells(s,    t) 
     t={}; for s1 in s:gmatch("([^,]+)") do t[1+#t]=coerce(s1) end; return t end
@@ -33,14 +39,19 @@ local function csv(sFilename,fun,      src,s,cells)
     s = io.read()
     if s then fun(cells(s)) else return io.close(src) end end end
 
--- Lists
+-- ### Lists
+
+-- Push to list
 local function push(t,x) t[1+#t] = x; return x end
 
+-- Rearrange, in place
 local function shuffle(t,    j)
   for i = #t, 2, -1 do j = math.random(i); t[i], t[j] = t[j], t[i] end
   return t end
 
--- Mathis
+-- ### Math
+
+-- Sample from a gaussian. 
 function normal(mu,sd)
   while true do
     x1 = 2.0 * math.random() - 1
@@ -49,9 +60,13 @@ function normal(mu,sd)
     if w < 1 then
       return mu + sd * x1 * ((-2*math.log(w))/w)^0.5 end end end
 
--- Thing to string
+-- ### Thing to string
+
+-- Emulate printf.
 local fmt = string.format
 
+-- Nested thing to string. For things with keys,
+-- do not show private slots (i.e. those starting with "_").
 local function o(x,    u)
   if type(x) == "number" then return fmt("%g",x) end
   if type(x) ~= "table"  then return tostring(x) end
@@ -63,23 +78,31 @@ local function o(x,    u)
        table.sort(u) end
   return "{" .. table.concat(u,", ") .. "}" end 
 
+-- Print nested things.
 local function oo(x) print(o(x)) end
 
--- Objects
+-- ### Objects
+
+-- OO in two lines? Cool
 local function new(klass,obj) 
   klass.__index=klass; klass.__tostring=o; return setmetatable(obj,klass) end
 
--- --------------------------------------------------------------------------------------
+-- ## Classes
 local DATA,BIN,COLS,ROW,SYM,NUM = {},{},{},{},{},{}
 
+-- ### SYM
+
+-- Summarize a stream of symbols
 function SYM:new(at,txt) return new(SYM,{n=0,at=at,txt=txt,has={},most=0,mode=nil}) end
 
+-- Update
 function SYM:add(x) 
   self.n = self.n + 1
   self.has[x] = (self.has[x] or 0) + 1 
   if self.has[x] > self.most then 
     self.most, self.mode = self.has[x], x end end
 
+-- Return symbol that most selects for the receiver.
 function SYM.contrast(i,j,      y,n,most,x)
   most = 0
   for k,v in pairs(t) do
@@ -88,13 +111,17 @@ function SYM.contrast(i,j,      y,n,most,x)
     if y > n and y > most then most,x = y,k end end
   return {score=most, lo=x, hi=x} end
 
+-- Return tendendcy to _not_ be the middle value.
 function SYM:div(      e)
   e=0; for _,n in pairs(self.has) do e=e- n/self.n * math.log(n/self.n,2) end
   return e end
 
+-- Return middle value.
 function SYM:mid() return self.mode end
 
--- --------------------------------------------------------------------------------------
+-- ### NUM
+
+-- Summarize a stream of numbers.
 function NUM:new(at,txt)
   return new(NUM, {n=0, at=at, txt=txt, lo=1E32, hi=-1E32, mu=0, m2=0, sd=0,
                    goal=tostring(txt):find"-$" and 0 or 1}) end
@@ -123,7 +150,6 @@ function NUM.contrast(i,j)
 
 function NUM:div() return self.sd end
 
-
 function NUM:mid() return self.mu end
 
 function NUM:norm(x)
@@ -141,7 +167,8 @@ function COLS:new(names)
 function COLS:add(row)
   for _,cols in pairs{self.x,self.y} do
     for _,col in pairs(cols) do
-      col:add(row[col.at]) end end 
+      if row[col.at] ~= "?" then
+        col:add(row[col.at]) end end end
   return row end
    
 function COLS:chebyshev(row,    d)

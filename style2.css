@@ -1,14 +1,27 @@
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Delicious+Handrawn&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
+:root {
+  --pretty: #658291;
+}
+
+body { max-width: 800px; }
 
 body {
-  font-family: xGeorgia, Palatino, 'Palatino Linotype', Times, 'Times New Roman', serif;
-  padding: 1em;
-  line-height: 120%;
-  max-width: 800px;
+  color: #2d;  
+  max-width: 80ch;
+  font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+  padding: 2em 1em;
 }
-.p code { font-weight: bold; color:red; }
 
-.good { font-size: 20pt; color: #28A745; vertical-align: middle;}
-.blue { font-size: 20pt; color: #007BFF; vertical-align: middle;}
-.orange { font-size: 20pt; color: #FD7E14; vertical-align: middle;}
-.bad    { font-size: 20pt; color: red; vertical-align: middle; }
+h1::first-letter{ color:#ff8A00; }
+
+h1 { color: var(--pretty); padding-top:0px; 
+     margin-top:0px; font-size: 90px; 
+     font-family: "Delicious Handrawn", cursive;
+}
+
+pre {  padding-left: 10px; border-left: solid 2px #CCC; font-size: small; }
+
+h2 {  border-top: solid 2px var(--pretty); }
