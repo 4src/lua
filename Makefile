@@ -38,3 +38,10 @@ html:
          --highlight-style tango  -o $@  
 
 #          -V lang=lua -o $@  ez.md
+
+
+watch:
+	echo mu.lua | entr make check
+
+check:
+	clear; figlet -W -f mini  $$RANDOM ; luac -p mu.lua

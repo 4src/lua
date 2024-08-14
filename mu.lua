@@ -10,12 +10,12 @@ USAGE:
   lua litl.lua [-h] [-[bBcst] ARG] 
 
 OPTIONS:
-  -B Best    best size           =  .5
-  -c cohen   cohen small effect  =  .35
-  -h         show help 
-  -s seed    random number seed  =  1234567891
-  -S Samples random number seed  =  512
-  -t train   csv data file       =  ../../timm/moot/optimize/misc/auto93.csv]]
+  -B Best     best size           =  .5
+  -c cohen    cohen small effect  =  .35
+  -h          show help 
+  -s seed     random number seed  =  1234567891
+  -S Samples  random number seed  =  512
+  -t train    csv data file       =  ../../timm/moot/optimize/misc/auto93.csv]]
 
 -- ## Lib
 -- ### String to thing(s)
@@ -23,17 +23,16 @@ OPTIONS:
 -- Simple coerce (assumes booleans, nil, ints, floatss or strings)
 local function coerce(s,     fun)
   function fun(s) return s==nil and nil or s=="true" and true or s ~= "false" and s end
-  if type(s) ~= "string" then return s end
-  return math.tointeger(s) or tonumber(s) or fun(s:match"^%s*(.-)%s*$") end
+  return math.tointeger(s) or tonumber(s) or fun(s:match"^%s*(.-)%s*$") end  
 
 -- Parse settings from `help` into `the`.
-help:gsub("\n[%s]+[-][%S][%s]+([%S]+)[^\n]+=[%s]+([%S]+)", 
+help:gsub("\n[%s]+[-][%S][%s]+([%S]+)[^\n]+=[%s]+([%S]+)",  
           function(k,v) the[k] = coerce(v) end)
 
--- Read csv, coerce cells
+-- Read csv, coerce cells  
 local function csv(sFilename,fun,      src,s,cells)
   function cells(s,    t) 
-    t={}; for s1 in s:gmatch("([^,]+)") do t[1+#t]=coerce(s1) end; return t end
+    t={}; for s1 in s:gmatch("([^,]+)") do t[1+#t]=coerce(s1) end; return t end  
   src = io.input(sFilename)
   while true do
     s = io.read()
@@ -48,6 +47,9 @@ local function push(t,x) t[1+#t] = x; return x end
 local function shuffle(t,    j)
   for i = #t, 2, -1 do j = math.random(i); t[i], t[j] = t[j], t[i] end
   return t end
+
+-- Sort a list, inplace
+local function sort(t,fun) table.sort(t,fun); return t end
 
 -- ### Math
 
@@ -87,7 +89,7 @@ local function oo(x) print(o(x)) end
 local function new(klass,obj) 
   klass.__index=klass; klass.__tostring=o; return setmetatable(obj,klass) end
 
--- ## Classes
+-- ## Classes
 local DATA,BIN,COLS,ROW,SYM,NUM = {},{},{},{},{},{}
 
 -- ### SYM
@@ -137,7 +139,7 @@ function NUM:add(x,     d)
 
 function NUM:cdf(x,     z,fun)
   fun = function(z) return 1 - 0.5*math.exp(-0.717*z - 0.416*z*z) end
-  z = (x - i.mu)/i.sd
+  z = (x - self.mu)/self.sd
   return z >=  0 and fun(z) or 1 - fun(-z) end
 
 function NUM.contrast(i,j)
@@ -164,11 +166,11 @@ function COLS:new(names)
       push(s:find"[+-]$" and self.y or self.x, col) end end
   return self end
 
-function COLS:add(row)
+function COLS:add(row,   v)
   for _,cols in pairs{self.x,self.y} do
     for _,col in pairs(cols) do
-      if row[col.at] ~= "?" then
-        col:add(row[col.at]) end end end
+      v = row[col.at]
+      if v ~= "?" then col:add(v) end end end 
   return row end
    
 function COLS:chebyshev(row,    d)
@@ -202,17 +204,39 @@ function DATA:sort(f,n)
   return self, f( self.rows[n] ) end
 
 -- -------------------------------------------------------------------------------------
-go.h    = function(_) print("\n" .. help .. "\n") end
-go.c    = function(x) the.cohen = coerce(x) end
-go.b    = function(x) the.bins  = coerce(x) end
-go.B    = function(x) the.Best  = coerce(x) end
-go.s    = function(x) the.seed  = coerce(x); math.randomseed(the.seed) end
+local function goes(     t)
+  t={}; for k,_ in pairs(go) do if  #k > 1 then t[1+#t] = k end end
+  return sort(t) end
+
+go.h    = function(_) 
+            print("\n" .. help .. "\n") 
+            print("COMMANDS:\n  lua mu.lua [-"
+                  ..table.concat(goes(),',-').."]\n") end
+
+go.all  = function(_) 
+            for _,k in pairs(goes()) do 
+              if k ~= "all" then 
+                io.write("."); io.flush()
+                math.randomseed(the.seed)
+                go[k]() end end end
+
+go.c    = function(x) the.cohen = x end
+go.b    = function(x) the.bins  = x end
+go.B    = function(x) the.Best  = x end
+go.s    = function(x) the.seed  = x; math.randomseed(x) end
 go.t    = function(x) the.train = x end
+
 go.the  = function(_) oo(the) end
-go.csv  = function(_) csv(the.train, oo) end
+
+go.csv  = function(_) 
+            n=0
+            csv(the.train, function(row)
+                             n=n+1
+                             if n>10 then return end 
+                             oo(row) end) end
 
 go.num  = function(_, n)
-            n=NUM:new(); for i=1,100 do n:add(math.random()^.5) end 
+            n=NUM:new(); for i=1,100 do n:add(math.random()^.5) end   
             assert(0.71 < n:mid() and n:mid() < 0.72)
             assert(0.22 < n:div() and n:div() < 0.23) end
 
@@ -239,9 +263,15 @@ go.sort = function(_,   last,c)
               assert(c >= last)  
               last=c end end 
 
+go.contrast = function(_,  left,right)
+  left  = NUM:new(); for i=1,1000 do  left:add(normal(2.5, 3)) end
+  right = NUM:new(); for i=1,1000 do  right:add(normal(5, 1) ) end 
+  oo(left:contrast(right)) end
+
 -- --------------------------------------------------------------------------------------
 math.randomseed(the.seed)
 if   pcall(debug.getlocal,4,1) 
 then return {the=the, DATA=DATA, COLS=COLS, ROW=ROW, SYM=SYM, NUM=NUM}
 else for j,s in pairs(arg) do
-       if go[s:sub(2)] then go[s:sub(2)](arg[j+1]) end end end 
+       if go[s:sub(2)] then 
+          go[s:sub(2)]( coerce(arg[j+1] or "") ) end end end 
