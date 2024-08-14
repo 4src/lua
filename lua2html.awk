@@ -1,5 +1,6 @@
 BEGIN                         { STOP="" }
 NR < 3                        { next } 
+                              { gsub(/\f/,"") }
 comment($0) && !comment(last) { printf STOP }
 !comment($0) && comment(last) { print "\n```lua"; STOP="```\n\n" }
 END                           { if(!comment(last)) print STOP }
