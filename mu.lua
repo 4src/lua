@@ -133,7 +133,7 @@ function NUM:new(at,txt)
                    goal=tostring(txt):find"-$" and 0 or 1}) end
 
 -- Incremental ally update `lo,hi,mu,sd` (using 
--- [Welford's algorithm[(https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm)).
+-- [Welford's algorithm](https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance#Welford's_online_algorithm)).
 function NUM:add(x,     d)
   self.n  = self.n + 1
   self.lo = math.min(x,self.lo)  
