@@ -114,9 +114,9 @@ function SYM.contrast(i,j,      y,n,r,most,x)
   for k,v in pairs(i.has) do
     y = v/i.n
     n = (j.has[k] or 0)/j.n
-    r = y/(n+1E-32)
+    r = y/(n+1E-3)
     if y > n and r > most then most,x = r,k end end
-  return {score=most, lo=x, hi=x} end
+  return {score=most, mid=x, lo=x, hi=x} end
 
 -- Return tendency to _not_ be the middle value.
 function SYM:div(      e)
@@ -162,7 +162,7 @@ function NUM.contrast(i,j,    a,b,c, y,n,x1,x2,r)
   y = i:cdf(x2) - i:cdf(x1)
   n = j:cdf(x2) - j:cdf(x1)
   r = y/(n+1E-32)
-  return {score= r, mid1=i.mu,lo=x1, hi=x2} end
+  return {score= r, mid=(x1+x2)/2, lo=x1, hi=x2} end
 
 -- Return tendency to _not_ be the middle value.
 function NUM:div() return self.sd end
