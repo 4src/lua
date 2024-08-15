@@ -111,7 +111,7 @@ function SYM:add(x)
 -- Return symbol that most selects for the receiver.
 function SYM.contrast(i,j,      y,n,most,x)
   most = 0
-  for k,v in pairs(t) do
+  for k,v in pairs(i.has) do
     y = v/i.n
     n = (j.has[k] or 0)/j.n
     if y > n and y > most then most,x = y,k end end
@@ -147,6 +147,7 @@ function NUM:add(x,     d)
 function NUM:cdf(x,     z,fun)
   fun = function(z) return 1 - 0.5*math.exp(-0.717*z - 0.416*z*z) end
   z = (x - self.mu)/self.sd
+  z = math.max(-3, math.min(3, z))
   return z >=  0 and fun(z) or 1 - fun(-z) end
 
 -- Return value of favoring `i.u`
@@ -206,7 +207,8 @@ function DATA:new() return new(DATA, {cols=nil, rows={}}) end
 function DATA:add(row)
   if   self.cols
   then push(self.rows, self.cols:add(row)) 
-  else self.cols = COLS:new(row) end end
+  else self.cols = COLS:new(row) end 
+  return self end
 
 -- Copy the column structure; maybe add in some rows.
 function DATA:clone(rows)
@@ -301,16 +303,20 @@ go.sort = function(_,   last,c)
 go.contrast = function(_,  left,right)
   left  = NUM:new(); for i=1,1000 do  left:add(normal(2.5, 3)) end
   right = NUM:new(); for i=1,1000 do  right:add(normal(5, 1) ) end 
-  oo(left:contrast(right)) end
+  oo(left:contrast(right)) 
+  left  = NUM:new(); for i=1,1000 do  left:add(normal(2.5, 1)) end
+  right = NUM:new(); for i=1,1000 do  right:add(normal(5, 1) ) end 
+  oo(left:contrast(right)) 
+end
 
 
 go.contrasts = function(_,  left,right)
             d,n = DATA:new():read(the.train):sort()
             best,rest = d:clone(), d:clone()
-            for _,row in pairs(d.row) do
-              (d:chebyshev(row) <= n and best or rest):add(row) end
+            for _,row in pairs(d.rows) do
+              (d.cols:chebyshev(row) <= n and best or rest):add(row) end
             for i,col in pairs(best.cols.x) do
-               oo(col:contrast(rest.cols.x[i])) end end 
+               print(col.txt, o(col:contrast(rest.cols.x[i]))) end end 
 
 -- ## Start-up
 -- If loaded inside another Lua file, just return the classes. Else
