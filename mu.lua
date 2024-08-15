@@ -7,7 +7,7 @@ mu.lua: a little data goes a long way
 (c) 2024 Tim Menzies, <timm@ieee.org>, BSD-2
 
 USAGE:
-  lua litl.lua [-h] [-[bBcqst] ARG] 
+  lua mu.lua [-h] [-[bBcqst] ARG] 
 
 OPTIONS:
   -B Best     best size           =  .5
@@ -21,10 +21,10 @@ OPTIONS:
 -- ## Lib
 -- ### String to thing(s)
 
--- Simple coerce (assumes booleans, nil, ints, floatss or strings)
-local function coerce(s,     fun)
-  function fun(s) return s==nil and nil or s=="true" and true or s ~= "false" and s end
-  return math.tointeger(s) or tonumber(s) or fun(s:match"^%s*(.-)%s*$") end  
+-- Simple coerce (assumes booleans, nil, ints, floats or strings)
+local function trim(s)    return s:match"^%s*(.-)%s*$" end
+local function _coerce(s) return s=="true" and true or s ~= "false" and s end
+local function coerce(s)  return math.tointeger(s) or tonumber(s) or _coerce(trim(s)) end  
 
 -- Parse settings from `help` into `the`.
 help:gsub("\n[%s]+[-][%S][%s]+([%S]+)[^\n]+=[%s]+([%S]+)",  
@@ -33,7 +33,7 @@ help:gsub("\n[%s]+[-][%S][%s]+([%S]+)[^\n]+=[%s]+([%S]+)",
 -- Read csv, coerce cells, call `fun` on each rows.
 local function csv(sFilename,fun,      src,s,cells)
   function cells(s,    t) 
-    t={}; for s1 in s:gmatch("([^,]+)") do t[1+#t]=coerce(s1) end; return t end  
+    t={}; for s1 in s:gmatch"([^,]+)" do t[1+#t] = coerce(s1) end; return t end  
   src = io.input(sFilename)
   while true do
     s = io.read()
@@ -150,13 +150,13 @@ function NUM:cdf(x,     z,fun)
   return z >=  0 and fun(z) or 1 - fun(-z) end
 
 -- Return value of favoring `i.u`
-function NUM.contrast(i,j)
-  a = 1/(2*i.sd^2)  - 1/(2*i.sd^2)  
-  b = j.mu/(i.sd^2) - i.mu/(i.sd^2)
-  c = i.mu^2 /(2*i.sd^2) - j.mu^2 / (2*i.sd^2) - math.log(i.sd/i.sd)  
-  x1= (-b - (b^2 - 4*a*c)^.5)/(2*a)
-  x2= (-b + (b^2 - 4*a*c)^.5)/(2*a)
-  return {score= i:cdf(x2) - i:cdf(x1), lo=x1, hi=x2} end
+function NUM.contrast(i,j,    a,b,c,xlo,xhi)
+  a = 1/(2*i.sd^2)  - 1/(2*j.sd^2)  
+  b = j.mu/(j.sd^2) - i.mu/(i.sd^2)
+  c = i.mu^2 /(2*i.sd^2) - j.mu^2 / (2*j.sd^2) - math.log(j.sd/(i.sd + 1E-32))  
+  xhi= (-b - (b^2 - 4*a*c)^.5)/(2*a + 1E-32)
+  xlo= (-b + (b^2 - 4*a*c)^.5)/(2*a + 1E-32)
+  return {score= i:cdf(xhi) - i:cdf(xlo), mid=i.mu,lo=xlo, hi=xhi} end
 
 -- Return tendency to _not_ be the middle value.
 function NUM:div() return self.sd end
@@ -210,11 +210,11 @@ function DATA:add(row)
 
 -- Copy the column structure; maybe add in some rows.
 function DATA:clone(rows)
-  return DATA:new():add(self.cols.names):load(rows or {}) end
+  return DATA:new():add(self.cols.names):load(rows) end
 
 -- Load in a lost of rows. Return self.
-function DATA:load(lst) 
-  for _,row in pairs(lst or {}) do self:add(row) end 
+function DATA:load(rows) 
+  for _,row in pairs(rows or {}) do self:add(row) end 
   return self end
 
 -- Read in a csc file full of rows. Return self.
@@ -303,6 +303,14 @@ go.contrast = function(_,  left,right)
   right = NUM:new(); for i=1,1000 do  right:add(normal(5, 1) ) end 
   oo(left:contrast(right)) end
 
+
+go.contrasts = function(_,  left,right)
+            d,n = DATA:new():read(the.train):sort()
+            best,rest = d:clone(), d:clone()
+            for _,row in pairs(d.row) do
+              (d:chebyshev(row) <= n and best or rest):add(row) end
+            for i,col in pairs(best.cols.x) do
+               oo(col:contrast(rest.cols.x[i])) end end 
 
 -- ## Start-up
 -- If loaded inside another Lua file, just return the classes. Else
