@@ -162,7 +162,7 @@ function NUM.contrast(i,j,    a,b,c, y,n,x1,x2,r)
   y = i:cdf(x2) - i:cdf(x1)
   n = j:cdf(x2) - j:cdf(x1)
   r = y/(n+1E-32)
-  return {score= r, mid=(x1+x2)/2, lo=x1, hi=x2} end
+  return {score= r, mid=i.mu, lo=x1, hi=x2} end
 
 -- Return tendency to _not_ be the middle value.
 function NUM:div() return self.sd end
