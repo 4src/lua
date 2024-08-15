@@ -31,9 +31,10 @@ html:
 
 ~/tmp/%.html : %.lua 
 	cp style2.css ~/tmp
+	cp mu.png  ~/tmp
 	gawk -f lua2html.awk $< \
 	| pandoc -s -f markdown --number-sections --toc --toc-depth 5 -c style2.css \
-				--mathjax \
+				--mathjax -B b4.html\
 	       --metadata title="$<" \
          --highlight-style tango  -o $@  
 

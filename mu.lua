@@ -2,7 +2,7 @@
 -- <!-- vim : set ts=2 sw=2 sts=2 et : --> 
 
 -- ## Settings
-local go,the,help={},{},[[
+local the,help={},[[
 mu.lua: a little data goes a long way
 (c) 2024 Tim Menzies, <timm@ieee.org>, BSD-2
 
@@ -20,7 +20,7 @@ OPTIONS:
 
 -- ## Lib
 -- ### String to thing(s)
-
+--
 -- Simple coerce (assumes booleans, nil, ints, floats or strings)
 local function trim(s)    return s:match"^%s*(.-)%s*$" end
 local function _coerce(s) return s=="true" and true or s ~= "false" and s end
@@ -40,7 +40,7 @@ local function csv(sFilename,fun,      src,s,cells)
     if s then fun(cells(s)) else return io.close(src) end end end
 
 -- ### Lists
-
+--
 -- Push to list
 local function push(t,x) t[1+#t] = x; return x end
 
@@ -53,9 +53,9 @@ local function shuffle(t,    j)
 local function sort(t,fun) table.sort(t,fun); return t end
 
 -- ### Math
-
+--
 -- Sample from a Gaussian. 
-function normal(mu,sd)
+local function normal(mu,sd,      x1,x2,w)
   while true do
     x1 = 2.0 * math.random() - 1
     x2 = 2.0 * math.random() - 1
@@ -64,12 +64,12 @@ function normal(mu,sd)
       return mu + sd * x1 * ((-2*math.log(w))/w)^0.5 end end end
 
 -- ### Thing to string
-
+--
 -- Emulate printf.
 local fmt = string.format
 
 -- Maybe not print
-function say(...) if not the.quiet then print(...) end end
+local function say(...) if not the.quiet then print(...) end end
 
 -- Nested thing to string. For things with keys,
 -- do not show private slots (i.e. those starting with "_").
@@ -88,16 +88,16 @@ local function o(x,    u)
 local function oo(x) say(o(x)) end
 
 -- ### Objects
-
--- OO in two lines? Cool
+--
+-- OO in two lines (sans inheritance)? Cool.
 local function new(klass,obj) 
-  klass.__index=klass; klass.__tostring=o; return setmetatable(obj,klass) end
+  klass.__index=klass; klass.__tostring=o; return setmetatable(obj,klass) end 
 
 -- ## Classes
-local DATA,BIN,COLS,ROW,SYM,NUM = {},{},{},{},{},{}
+local DATA,COLS,ROW,SYM,NUM = {},{},{},{},{}
 
 -- ### SYM
-
+--
 -- Summarize a stream of symbols
 function SYM:new(at,txt) return new(SYM,{n=0,at=at,txt=txt,has={},most=0,mode=nil}) end
 
@@ -109,12 +109,13 @@ function SYM:add(x)
     self.most, self.mode = self.has[x], x end end
 
 -- Return symbol that most selects for the receiver.
-function SYM.contrast(i,j,      y,n,most,x)
+function SYM.contrast(i,j,      y,n,r,most,x)
   most = 0
   for k,v in pairs(i.has) do
     y = v/i.n
     n = (j.has[k] or 0)/j.n
-    if y > n and y > most then most,x = y,k end end
+    r = y/(n+1E-32)
+    if y > n and r > most then most,x = r,k end end
   return {score=most, lo=x, hi=x} end
 
 -- Return tendency to _not_ be the middle value.
@@ -126,7 +127,7 @@ function SYM:div(      e)
 function SYM:mid() return self.mode end
 
 -- ### NUM
-
+-- 
 -- Summarize a stream of numbers.
 function NUM:new(at,txt)
   return new(NUM, {n=0, at=at, txt=txt, lo=1E32, hi=-1E32, mu=0, m2=0, sd=0,
@@ -147,17 +148,21 @@ function NUM:add(x,     d)
 function NUM:cdf(x,     z,fun)
   fun = function(z) return 1 - 0.5*math.exp(-0.717*z - 0.416*z*z) end
   z = (x - self.mu)/self.sd
-  z = math.max(-3, math.min(3, z))
   return z >=  0 and fun(z) or 1 - fun(-z) end
 
--- Return value of favoring `i.u`
-function NUM.contrast(i,j,    a,b,c,xlo,xhi)
+-- Return value of favoring `i.mu` From
+-- [stackoverflow](https://stackoverflow.com/questions/22579434/python-finding-the-intersection-point-of-two-gaussian-curves).
+function NUM.contrast(i,j,    a,b,c, y,n,x1,x2,r)
   a = 1/(2*i.sd^2)  - 1/(2*j.sd^2)  
   b = j.mu/(j.sd^2) - i.mu/(i.sd^2)
   c = i.mu^2 /(2*i.sd^2) - j.mu^2 / (2*j.sd^2) - math.log(j.sd/(i.sd + 1E-32))  
-  xhi= (-b - (b^2 - 4*a*c)^.5)/(2*a + 1E-32)
-  xlo= (-b + (b^2 - 4*a*c)^.5)/(2*a + 1E-32)
-  return {score= i:cdf(xhi) - i:cdf(xlo), mid=i.mu,lo=xlo, hi=xhi} end
+  x1= (-b - (b^2 - 4*a*c)^.5)/(2*a + 1E-32)
+  x2= (-b + (b^2 - 4*a*c)^.5)/(2*a + 1E-32)
+  if x1 > x2 then x1,x2=x2,x1 end
+  y = i:cdf(x2) - i:cdf(x1)
+  n = j:cdf(x2) - j:cdf(x1)
+  r = y/(n+1E-32)
+  return {score= r, mid1=i.mu,lo=x1, hi=x2} end
 
 -- Return tendency to _not_ be the middle value.
 function NUM:div() return self.sd end
@@ -171,11 +176,11 @@ function NUM:norm(x)
 
 -- ### COLS
 -- Factory that makes and stores and updates NUMs and SYMs.
-
+-- 
 -- Initialize from column header names. NUM f upper case, else SYM.
 -- Ending in plus or minus means "goal".  Ending in "X"  means ignore.
 -- Place all cols in `all`. Also, place goals in `y` and others in `x.
-function COLS:new(names)
+function COLS:new(names,     col)
   self = new(COLS,{names=names, x={}, y={}, all={}})
   for c,s in pairs(self.names) do
     col = push(self.all, (s:find"^[A-Z]" and NUM or SYM):new(c,s))
@@ -199,7 +204,7 @@ function COLS:chebyshev(row,    d)
 
 -- ### DATA
 -- Store `rows`, summarized in `cols`.
-
+-- 
 -- Create.
 function DATA:new() return new(DATA, {cols=nil, rows={}}) end
 
@@ -214,7 +219,7 @@ function DATA:add(row)
 function DATA:clone(rows)
   return DATA:new():add(self.cols.names):load(rows) end
 
--- Load in a lost of rows. Return self.
+-- Load in a list of rows. Return self.
 function DATA:load(rows) 
   for _,row in pairs(rows or {}) do self:add(row) end 
   return self end
@@ -229,22 +234,23 @@ function DATA:sort(f,n)
   f = function(row) return self.cols:chebyshev(row) end
   table.sort(self.rows, function(a,b) return f(a) < f(b) end)
   n = (#self.rows)^the.Best // 1 
-  return self, f( self.rows[n] ) end
+  return self, n end
 
--- -------------------------------------------------------------------------------------
--- ## Demos
-
+-- ## Place to store demos
+local go={}
+-- ### Support code
 -- Return all the commands.
 local function goes(     t)
   t={}; for k,_ in pairs(go) do if  #k > 1 then t[1+#t] = k end end
   return sort(t) end
 
+-- ### Insert demos here
 go.h    = function(_) 
             say("\n" .. help .. "\n") 
             say("COMMANDS:\n  lua mu.lua [-"
                   ..table.concat(goes(),',-').."]\n") end
 
-go.all  = function(_, fails) 
+go.all  = function(_,            fails,pass,err) 
             fails = 0
             for _,k in pairs(goes()) do 
               if k ~= "all" then 
@@ -265,7 +271,7 @@ go.t    = function(x) the.train = x end
 
 go.the  = function(_) oo(the) end
 
-go.csv  = function(_) 
+go.csv  = function(_,        n) 
             n=0
             csv(the.train, function(row)
                              n=n+1
@@ -277,7 +283,7 @@ go.num  = function(_, n)
             assert(0.71 < n:mid() and n:mid() < 0.72,"bad mid")
             assert(0.22 < n:div() and n:div() < 0.23,"bad div") end
 
-go.normal  =function(_, n)
+go.normal  =function(_,          t,n,x)
               t={}; for i=1,1000 do x=normal(10,2) // 1; t[x]=(t[x] or 0) + 1 end
               for i = 4,16 do
                 n = t[i] or 0
@@ -287,12 +293,12 @@ go.sym  = function(_, s)
             s=SYM:new(); for _,x in pairs{"a","a","a","a","b","b","c"} do s:add(x) end
             assert(1.37 <= s:div() and s:div() <= 1.38,"bad div") end
 
-go.data = function(_,d) 
+go.data = function(_,         c,d) 
             d = DATA:new():read(the.train)
             c=0; for _,row in pairs(d.rows) do c=c+#row end
             assert(c==3184 and #d.cols.x==4 and  #d.cols.y==3,"bad load") end 
 
-go.sort = function(_,   last,c) 
+go.sort = function(_,   last,c,d) 
             d = DATA:new():read(the.train):sort()
             last=-1
             for i,row in pairs(d.rows) do
@@ -309,21 +315,21 @@ go.contrast = function(_,  left,right)
   oo(left:contrast(right)) 
 end
 
-
-go.contrasts = function(_,  left,right)
+go.contrasts = function(_,  left,right,d,n,best,rest)
             d,n = DATA:new():read(the.train):sort()
             best,rest = d:clone(), d:clone()
-            for _,row in pairs(d.rows) do
-              (d.cols:chebyshev(row) <= n and best or rest):add(row) end
+            for i,row in pairs(d.rows) do
+              (i <= n and best or rest):add(row) end
+            print(#best.rows,#rest.rows)
             for i,col in pairs(best.cols.x) do
                print(col.txt, o(col:contrast(rest.cols.x[i]))) end end 
 
 -- ## Start-up
+--
 -- If loaded inside another Lua file, just return the classes. Else
--- run any  command line entries that are also commands.
+-- run any  command line entries that are also `go` functions.
 math.randomseed(the.seed)
 if   pcall(debug.getlocal,4,1) 
 then return {the=the, DATA=DATA, COLS=COLS, ROW=ROW, SYM=SYM, NUM=NUM}
 else for j,s in pairs(arg) do
-       if go[s:sub(2)] then 
-          go[s:sub(2)]( coerce(arg[j+1] or "") ) end end end 
+       if go[s:sub(2)] then go[s:sub(2)]( coerce(arg[j+1] or "") ) end end end 

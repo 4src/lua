@@ -22,6 +22,6 @@ h1 { color: var(--pretty); padding-top:0px;
      font-family: "Delicious Handrawn", cursive;
 }
 
-pre {  padding-left: 10px; border-left: solid 2px #CCC; font-size: small; }
+pre {  padding: 10px; border-left: solid 2px #CCC; font-size: small; }
 
 h2 {  border-top: solid 2px var(--pretty); }
