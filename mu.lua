@@ -219,10 +219,10 @@ function SOME:has()
   if not self.ok then table.sort(self._has); self.ok = true end
 	return self._has end
 
-function SOME:div() a=self:has(); return (a[(#a * .9)//1] - a[(#a * .1)//1])/2.56 end
-function SOME:hi()  a=self:has(); return a[#a] end
-function SOME:lo()  a=self:has(); return a[1] end
-function SOME:mid() a=self:has(); return a[(#a)//2] end
+function SOME:div(    a) a=self:has(); return (a[(#a * .9)//1] - a[(#a * .1)//1])/2.56 end
+function SOME:hi(     a) a=self:has(); return a[#a] end
+function SOME:lo(     a) a=self:has(); return a[1] end
+function SOME:mid(    a) a=self:has(); return a[(#a)//2] end
 
 -- ### COLS
 -- Factory that makes and stores and updates NUMs and SYMs.
@@ -269,10 +269,16 @@ function DATA:add(row)
 function DATA:clone(rows)
   return DATA:new():add(self.cols.names):load(rows) end
 
-function DATA:like(row, n, nClasses,     prior,out,v,inc)
+function DATA:contrasts()
+  tmp={}
+	_,n = self:sort()
+	best, rest = self:clone(slice(d.rows,1,n)), self:clone(slice(d.rows,n+1))
+  for i,col in pairs(i.cols.x) do push(tmp, {col=col,contrast=col:contrast()})
+	end
+function DATA:like(row, n, nClasses,  col,       prior,out,v,inc)
   prior = (#self.rows + the.k) / (n + the.k * nClasses)
   out   = math.log(prior)
-  for _,col in pairs(self.cols.x) do
+  for _,col in pairs(cols or self.cols.x) do
     v = row[col.at]
     if v ~= "?" then
       inc = col:like(v,prior)
@@ -417,7 +423,7 @@ go.contrasts = function(_,  left,right,d,n,best,rest)
                  for i,col in pairs(best.cols.x) do
                     print(col.txt, o(col:contrast(rest.cols.x[i]))) end end 
 
-go.alearn = function(repeats,     fun,d,top,out,start,repeats,asIs,toBe,d,start,r)
+go.alearn = function(repeats,     fun,d,top,rand,start,asIs,toBe,r,rows)
               repeats = repeats or 20
 							asIs,toBe,rand = SOME:new(), SOME:new(), SOME:new()
               d = DATA:new():read(the.train)
@@ -434,7 +440,7 @@ go.alearn = function(repeats,     fun,d,top,out,start,repeats,asIs,toBe,d,start,
 							  top=d:activeLearning(d.rows)[1] 
 								toBe:add(fun(d.cols:chebyshev(top))) end 
 							print("")
-							oo{rows=#d.rows, xcols=#d.cols.x, time= (os.clock() - start)/repeats}
+							oo{rows=#d.rows, xcols=#d.cols.x,msecs= 1000*(os.clock() - start)/repeats//1}
 							print("asIs",o{Mid=asIs:mid(), div=asIs:div(),small=r,lo=asIs:lo()})
 							print("toBe",o{Mid=toBe:mid(), div=toBe:div()})
 							print("rand",o{Mid=rand:mid(), div=rand:div()})
