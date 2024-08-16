@@ -48,6 +48,9 @@ local function csv(sFilename,fun,      src,s,cells)
 -- Push to list
 local function push(t,x) t[1+#t] = x; return x end
 
+local function map(t,fun,      u)
+  u={}; for k,v in pairs(t) do u[1+#u] = fun(v) end; return u end
+
 -- Rearrange, in place
 local function shuffle(t,    j)
   for i = #t, 2, -1 do j = math.random(i); t[i], t[j] = t[j], t[i] end
@@ -63,6 +66,13 @@ local function slice(t, go, stop, inc,       u)
   stop = math.min(#t, (stop or #t)//1)
   u={}; for j=go, stop, (inc or 1)//1 do u[1+#u]=t[j] end
   return u end
+
+function lt(x) return function(a,b) return a[x] < b[x] end end 
+
+-- Sorts `t` using the Schwartzian transform.
+function keysort(t,fun)
+  return map(sort(map(t, function(x) return {x=x, fun=fun(x)} end), lt"fun"),
+             function(pair) return pair.x end) end 
 
 -- ### Math
 --

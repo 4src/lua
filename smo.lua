@@ -4,8 +4,8 @@ function DATA:activeLearning(rows, scoreFun, slower):
   function ranked(rows): return self:clone(rows):sort().rows end
 
   function todos(todo,     b,now,after):
-    if slower then return todo,{} end
     b = the.buffer
+    if slower or #todo <= 4*b then return todo,{} end
     now, after = slice(todo, 1,b), slice(todo, b*3+1)
     for i=b*2+1, b*3 do push(now,   todo[i]) end
     for i=b+1  , b*2 do push(after, todo[i]) end end
