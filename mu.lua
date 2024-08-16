@@ -14,6 +14,7 @@ OPTIONS:
   -a start    initial labels        = 4
   -b buffer   half the sort buffer  = 50
   -B Best     best size             = .5
+	-f features max features          = 4
   -c cohen    cohen small effect    = .35
   -h          show help 
   -k k        nb class low freq     = 1
@@ -68,6 +69,7 @@ local function slice(t, go, stop, inc,       u)
   return u end
 
 local function lt(x) return function(a,b) return a[x] < b[x] end end 
+local function gt(x) return function(a,b) return a[x] > b[x] end end 
 
 -- Sorts `t` using the Schwartzian transform.
 local function keysort(t,fun)
@@ -138,7 +140,7 @@ function SYM.contrast(i,j,      y,n,r,most,x)
     n = (j.has[k] or 0)/j.n
     r = y - n
     if r > most then most,x = r,k end end
-  return {score=most, mid=x, lo=x, hi=x} end
+  return {score=most, mid=x, lo=x, hi=x, col=i} end
 
 -- Return tendency to _not_ be the middle value.
 function SYM:div(      e)
@@ -186,7 +188,7 @@ function NUM.contrast(i,j,    a,b,c, y,n,x1,x2)
   if x1 > x2 then x1,x2=x2,x1 end
   y  = i:cdf(x2) - i:cdf(x1)
   n  = j:cdf(x2) - j:cdf(x1)
-  return {score=y - n, mid=i.mu, lo=x1, hi=x2} end
+  return {score=y - n, mid=i.mu, lo=x1, hi=x2, col=i} end
 
 -- Return tendency to _not_ be the middle value.
 function NUM:div() return self.sd end
@@ -269,13 +271,18 @@ function DATA:add(row)
 function DATA:clone(rows)
   return DATA:new():add(self.cols.names):load(rows) end
 
-function DATA:contrasts()
-  tmp={}
+function DATA:features(      tmp,best,rest)
+  tmp, out = {},{}
 	_,n = self:sort()
 	best, rest = self:clone(slice(d.rows,1,n)), self:clone(slice(d.rows,n+1))
-  for i,col in pairs(i.cols.x) do push(tmp, {col=col,contrast=col:contrast()})
-	end
-function DATA:like(row, n, nClasses,  col,       prior,out,v,inc)
+  for i,col in pairs(best.cols.x) do 
+	  push(tmp, col:contrast(rest.cols.x[i])) end
+	for rank,contrast in pairs( slice( sort(tmp, gt"score"), 1, the.features )) do
+	  contrast.rank = rank
+	  out[contrast.col.at] = contrast end 
+	return out, best, rest end
+
+function DATA:like(row, n, nClasses,  col,       prior,out,v,inc) 
   prior = (#self.rows + the.k) / (n + the.k * nClasses)
   out   = math.log(prior)
   for _,col in pairs(cols or self.cols.x) do
