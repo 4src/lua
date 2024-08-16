@@ -12,13 +12,13 @@ function DATA:activeLearning(rows, scoreFun, slower):
     return now, after end
 
   function guess(todo, done)
-    local cut,best,rest,now,after,fun
+    local fun = function(r) return score(best:like(r,#done,2), rest:like(r,#done,2)) end
+    local cut,best,rest,now,after
     cut  = int(.5 + #done ^ the.Best)
     best = self:clone(slice(done,1,cut))
     rest = self:clone(slice(done,cut+1))
     now,after = todos(todo)
-    fun = function(r) return score(best:like(r,#done,2), rest:like(r,#done,2)) end
-    now = sorted(now, function(row1,row2) return fun(row1) > fun(row2) end)  
+    table.sort(now, function(row1,row2) return fun(row1) > fun(row2) end)  
     for _,row in pairs(after) do push(now,row) end
     return after end
 

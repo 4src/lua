@@ -67,10 +67,10 @@ local function slice(t, go, stop, inc,       u)
   u={}; for j=go, stop, (inc or 1)//1 do u[1+#u]=t[j] end
   return u end
 
-function lt(x) return function(a,b) return a[x] < b[x] end end 
+local function lt(x) return function(a,b) return a[x] < b[x] end end 
 
 -- Sorts `t` using the Schwartzian transform.
-function keysort(t,fun)
+local function keysort(t,fun)
   return map(sort(map(t, function(x) return {x=x, fun=fun(x)} end), lt"fun"),
              function(pair) return pair.x end) end 
 
@@ -116,7 +116,7 @@ local function new(klass,obj)
   klass.__index=klass; klass.__tostring=o; return setmetatable(obj,klass) end 
 
 -- ## Classes
-local DATA,COLS,ROW,SYM,NUM = {},{},{},{},{}
+local DATA,COLS,SOME,ROW,SYM,NUM = {},{},{},{},{},{}
 
 -- ### SYM
 --
@@ -136,8 +136,8 @@ function SYM.contrast(i,j,      y,n,r,most,x)
   for k,v in pairs(i.has) do
     y = v/i.n
     n = (j.has[k] or 0)/j.n
-    r = y/(n+1E-3)
-    if y > n and r > most then most,x = r,k end end
+    r = y - n
+    if r > most then most,x = r,k end end
   return {score=most, mid=x, lo=x, hi=x} end
 
 -- Return tendency to _not_ be the middle value.
@@ -177,17 +177,16 @@ function NUM:cdf(x,     z,fun)
 
 -- Return value of favoring `i.mu` From
 -- [stackoverflow](https://stackoverflow.com/questions/22579434/python-finding-the-intersection-point-of-two-gaussian-curves).
-function NUM.contrast(i,j,    a,b,c, y,n,x1,x2,r)
-  a = 1/(2*i.sd^2)  - 1/(2*j.sd^2)  
-  b = j.mu/(j.sd^2) - i.mu/(i.sd^2)
-  c = i.mu^2 /(2*i.sd^2) - j.mu^2 / (2*j.sd^2) - math.log(j.sd/(i.sd + 1E-32))  
-  x1= (-b - (b^2 - 4*a*c)^.5)/(2*a + 1E-32)
-  x2= (-b + (b^2 - 4*a*c)^.5)/(2*a + 1E-32)
+function NUM.contrast(i,j,    a,b,c, y,n,x1,x2)
+  a  = 1/(2*i.sd^2)  - 1/(2*j.sd^2)  
+  b  = j.mu/(j.sd^2) - i.mu/(i.sd^2)
+  c  = i.mu^2 /(2*i.sd^2) - j.mu^2 / (2*j.sd^2) - math.log(j.sd/(i.sd + 1E-32))  
+  x1 = (-b - (b^2 - 4*a*c)^.5)/(2*a + 1E-32)
+  x2 = (-b + (b^2 - 4*a*c)^.5)/(2*a + 1E-32)
   if x1 > x2 then x1,x2=x2,x1 end
-  y = i:cdf(x2) - i:cdf(x1)
-  n = j:cdf(x2) - j:cdf(x1)
-  r = y/(n+1E-32)
-  return {score= r, mid=i.mu, lo=x1, hi=x2} end
+  y  = i:cdf(x2) - i:cdf(x1)
+  n  = j:cdf(x2) - j:cdf(x1)
+  return {score=y - n, mid=i.mu, lo=x1, hi=x2} end
 
 -- Return tendency to _not_ be the middle value.
 function NUM:div() return self.sd end
@@ -203,6 +202,31 @@ function NUM:mid() return self.mu end
 -- Normalize x 0..1
 function NUM:norm(x)
   return x=="?" and x or (x-self.lo)/ (self.hi - self.lo + 1E-32) end
+
+-- ### SOME
+function SOME:new(max) return new(SOME,{n=0,_has={},ok=false,max=max or 512}) end
+
+function SOME:add(x,      pos)
+  if x ~= "?" then
+	  self.n = self.n + 1
+		if   #(self._has) < self.max then pos= #self._has else
+		  if math.random() < self.max/i.n then pos= math.floor(math.random(#self._has)) end end 
+    if pos then
+		   self.ok = false
+		   self._has[1+pos] = x end end end 
+
+function SOME:has()
+  if not self.ok then table.sort(self._has); self.ok = true end
+	return self._has end
+
+function SOME:div()
+  a=self:has()
+	n = (#a)//10
+	return (a[9*n] - a[n])/2.56 end
+
+function SOME:mid()
+  a=self:has()
+	return a[(#a)//2] end
 
 -- ### COLS
 -- Factory that makes and stores and updates NUMs and SYMs.
@@ -276,6 +300,40 @@ function DATA:sort(f,n)
   n = (#self.rows)^the.Best // 1 
   return self, n end
 
+-- ## Active Learning
+function DATA:activeLearning(rows, scoreFun, slower)
+  scoreFun = scoreFun or function(B,R) return B-R end
+  local ranked,guess,todos,todo,done,k
+  function ranked(rows) return self:clone(rows):sort().rows end
+
+  function todos(todo,     b,now,after)
+    b = the.buffer
+    if slower or #todo <= 4*b then return todo,{} end
+    now, after = slice(todo, 1,b), slice(todo, b*3+1)
+    for i=b+1, 3*b do -- rotate early items to back of list
+      push(i >= b*2 and now or after,   todo[i]) end
+    return now, after end 
+
+  function guess(todo, done)
+    local cut,best,rest,now,after
+    local score = function(r) 
+                    return scoreFun(best:like(r,#done,2), rest:like(r,#done,2)) end
+    cut       = ((#done) ^ the.Best) // 1
+    best      = self:clone(slice(done,1,cut))
+    rest      = self:clone(slice(done,cut+1))
+    now,after = todos(todo)
+    table.sort(now, function(row1,row2) return score(row1) > score(row2) end)  
+    for _,row in pairs(after) do push(now,row) end
+    return now end
+
+  todo, done = slice(rows, the.start+1), ranked(slice(rows, 1, the.start))
+  for k = 1, the.stop - the.start do
+    if #todo < 4 then break end
+    todo = guess(todo, done)
+    push(done, table.remove(todo,1))
+    done = ranked(done) end
+  return done end 
+
 -- ## Place to store demos
 local go={}
 -- ### Support code
@@ -285,12 +343,12 @@ local function goes(     t)
   return sort(t) end
 
 -- ### Insert demos here
-go.h    = function(_) 
+go.h   = function(_) 
             say("\n" .. help .. "\n") 
             say("COMMANDS:\n  lua mu.lua [-"
                   ..table.concat(goes(),',-').."]\n") end
 
-go.all  = function(_,            fails,pass,err) 
+go.all = function(_,            fails,pass,err) 
             fails = 0
             for _,k in pairs(goes()) do 
               if k ~= "all" then 
@@ -302,34 +360,34 @@ go.all  = function(_,            fails,pass,err)
                      fails=fails+1 end end end
             os.exit(fails) end
 
-go.c    = function(x) the.cohen = x end
-go.b    = function(x) the.bins  = x end
-go.B    = function(x) the.Best  = x end
-go.q    = function(x) the.quiet = not the.quiet end
-go.s    = function(x) the.seed  = x; math.randomseed(x) end
-go.t    = function(x) the.train = x end
+go.c   = function(x) the.cohen = x end
+go.b   = function(x) the.bins  = x end
+go.B   = function(x) the.Best  = x end
+go.q   = function(x) the.quiet = not the.quiet end
+go.s   = function(x) the.seed  = x; math.randomseed(x) end
+go.t   = function(x) the.train = x end
 
-go.the  = function(_) oo(the) end
+go.the = function(_) oo(the) end
 
-go.csv  = function(_,        n) 
+go.csv = function(_,        n) 
             n=0
             csv(the.train, function(row)
                              n=n+1
                              if n>10 then return end 
                              oo(row) end ) end
 
-go.num  = function(_, n)  
+go.num = function(_, n)  
             n=NUM:new(); for i=1,100 do n:add(math.random()^.5) end   
             assert(0.71 < n:mid() and n:mid() < 0.72,"bad mid")
             assert(0.22 < n:div() and n:div() < 0.23,"bad div") end
 
-go.normal  =function(_,          t,n,x)
+go.normal = function(_,          t,n,x)
               t={}; for i=1,1000 do x=normal(10,2) // 1; t[x]=(t[x] or 0) + 1 end
               for i = 4,16 do
                 n = t[i] or 0
                 say(i,n,("*"):rep(n//10)) end end
 
-go.sym  = function(_, s)
+go.sym = function(_, s)
             s=SYM:new(); for _,x in pairs{"a","a","a","a","b","b","c"} do s:add(x) end
             assert(1.37 <= s:div() and s:div() <= 1.38,"bad div") end
 
@@ -340,30 +398,40 @@ go.data = function(_,         c,d)
 
 go.sort = function(_,   last,c,d) 
             d = DATA:new():read(the.train):sort()
-            last=-1
+            last = -1
             for i,row in pairs(d.rows) do
-              c=d.cols:chebyshev(row)
+              c = d.cols:chebyshev(row)
               assert(c >= last,"bad sort")  
-              last=c end end 
+              last = c end end 
 
 go.contrast = function(_,  left,right)
-  left  = NUM:new(); for i=1,1000 do  left:add(normal(2.5, 3)) end
-  right = NUM:new(); for i=1,1000 do  right:add(normal(5, 1) ) end 
-  oo(left:contrast(right)) 
-  left  = NUM:new(); for i=1,1000 do  left:add(normal(2.5, 1)) end
-  right = NUM:new(); for i=1,1000 do  right:add(normal(5, 1) ) end 
-  oo(left:contrast(right)) 
-end
+                left  = NUM:new(); for i=1,1000 do  left:add(normal(2.5, 3)) end
+                right = NUM:new(); for i=1,1000 do  right:add(normal(5, 1) ) end 
+                oo(left:contrast(right)) 
+                left  = NUM:new(); for i=1,1000 do  left:add(normal(2.5, 1)) end
+                right = NUM:new(); for i=1,1000 do  right:add(normal(5, 1) ) end 
+                oo(left:contrast(right)) end
 
 go.contrasts = function(_,  left,right,d,n,best,rest)
-            d,n = DATA:new():read(the.train):sort()
-            best,rest = d:clone(), d:clone()
-            for i,row in pairs(d.rows) do
-              (i <= n and best or rest):add(row) end
-            print(#best.rows,#rest.rows)
-            for i,col in pairs(best.cols.x) do
-               print(col.txt, o(col:contrast(rest.cols.x[i]))) end end 
+                 d,n = DATA:new():read(the.train):sort()
+                 best,rest = d:clone(), d:clone()
+                 for i,row in pairs(d.rows) do
+                   (i <= n and best or rest):add(row) end
+                 print(#best.rows,#rest.rows)
+                 for i,col in pairs(best.cols.x) do
+                    print(col.txt, o(col:contrast(rest.cols.x[i]))) end end 
 
+go.alearn = function(repeats,     d,top,out)
+              repeats = repeats or 1
+              d = DATA:new():read(the.train)
+							out = SOME:new()
+						  for i=1,repeats do
+			          io.stderr:write("."); io.stderr:flush()
+							  top=d:activeLearning(shuffle(d.rows))[1] 
+								out:add(d.cols:chebyshev(top)) end 
+							oo{mid=out:mid(), div=out:div()}
+							end
+              
 -- ## Start-up
 --
 -- If loaded inside another Lua file, just return the classes. Else
