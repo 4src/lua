@@ -10,8 +10,8 @@ USAGE:
   lua mu.lua [-h] [-[bBcqst] ARG] 
 
 OPTIONS:
+  -z stop     max labels            = 20
   -a start    initial labels        = 4
-  -z stop     max labels            = 30
   -b buffer   half the sort buffer  = 50
   -B Best     best size             = .5
   -c cohen    cohen small effect    = .35
@@ -210,7 +210,7 @@ function SOME:add(x,      pos)
   if x ~= "?" then
 	  self.n = self.n + 1
 		if   #(self._has) < self.max then pos= #self._has else
-		  if math.random() < self.max/i.n then pos= math.floor(math.random(#self._has)) end end 
+		  if math.random() < self.max/self.n then pos= math.floor(math.random(#self._has)) end end 
     if pos then
 		   self.ok = false
 		   self._has[1+pos] = x end end end 
@@ -219,14 +219,10 @@ function SOME:has()
   if not self.ok then table.sort(self._has); self.ok = true end
 	return self._has end
 
-function SOME:div()
-  a=self:has()
-	n = (#a)//10
-	return (a[9*n] - a[n])/2.56 end
-
-function SOME:mid()
-  a=self:has()
-	return a[(#a)//2] end
+function SOME:div() a=self:has(); return (a[(#a * .9)//1] - a[(#a * .1)//1])/2.56 end
+function SOME:hi()  a=self:has(); return a[#a] end
+function SOME:lo()  a=self:has(); return a[1] end
+function SOME:mid() a=self:has(); return a[(#a)//2] end
 
 -- ### COLS
 -- Factory that makes and stores and updates NUMs and SYMs.
@@ -361,7 +357,7 @@ go.all = function(_,            fails,pass,err)
             os.exit(fails) end
 
 go.c   = function(x) the.cohen = x end
-go.b   = function(x) the.bins  = x end
+go.b   = function(x) the.buffer  = x end
 go.B   = function(x) the.Best  = x end
 go.q   = function(x) the.quiet = not the.quiet end
 go.s   = function(x) the.seed  = x; math.randomseed(x) end
@@ -421,15 +417,27 @@ go.contrasts = function(_,  left,right,d,n,best,rest)
                  for i,col in pairs(best.cols.x) do
                     print(col.txt, o(col:contrast(rest.cols.x[i]))) end end 
 
-go.alearn = function(repeats,     d,top,out)
-              repeats = repeats or 1
+go.alearn = function(repeats,     fun,d,top,out,start,repeats,asIs,toBe,d,start,r)
+              repeats = repeats or 20
+							asIs,toBe,rand = SOME:new(), SOME:new(), SOME:new()
               d = DATA:new():read(the.train)
-							out = SOME:new()
+							for _,row in pairs(d.rows) do
+							  asIs:add(d.cols:chebyshev(row)) end
+							r = asIs:div()*the.cohen
+							fun = function(x) return (x//r + 0.5)*r end
+							start = os.clock()
 						  for i=1,repeats do
 			          io.stderr:write("."); io.stderr:flush()
-							  top=d:activeLearning(shuffle(d.rows))[1] 
-								out:add(d.cols:chebyshev(top)) end 
-							oo{mid=out:mid(), div=out:div()}
+                rows = shuffle(d.rows)
+								rand:add(fun(d.cols:chebyshev(
+							 	                d:clone(slice(rows,1,the.stop)):sort().rows[1])))
+							  top=d:activeLearning(d.rows)[1] 
+								toBe:add(fun(d.cols:chebyshev(top))) end 
+							print("")
+							oo{rows=#d.rows, xcols=#d.cols.x, time= (os.clock() - start)/repeats}
+							print("asIs",o{Mid=asIs:mid(), div=asIs:div(),small=r,lo=asIs:lo()})
+							print("toBe",o{Mid=toBe:mid(), div=toBe:div()})
+							print("rand",o{Mid=rand:mid(), div=rand:div()})
 							end
               
 -- ## Start-up
