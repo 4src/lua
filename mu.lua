@@ -10,13 +10,17 @@ USAGE:
   lua mu.lua [-h] [-[bBcqst] ARG] 
 
 OPTIONS:
-  -B Best     best size           =  .5
-  -c cohen    cohen small effect  =  .35
+  -a start    initial labels        = 4
+  -z stop     max labels            = 30
+  -b buffer   half the sort buffer  = 50
+  -B Best     best size             = .5
+  -c cohen    cohen small effect    = .35
   -h          show help 
-  -q quiet    hide details        = false 
-  -s seed     random number seed  =  1234567891
-  -S Samples  random number seed  =  512
-  -t train    csv data file       =  ../../timm/moot/optimize/misc/auto93.csv]]
+  -k k        nb class low freq     = 1
+  -m m        nb attribute low freq = 2
+  -q quiet    hide details          = false 
+  -s seed     random number seed    = 1234567891
+  -t train    csv data file         = ../../timm/moot/optimize/misc/auto93.csv]]
 
 -- ## Lib
 -- ### String to thing(s)
@@ -51,6 +55,14 @@ local function shuffle(t,    j)
 
 -- Sort a list, in-place
 local function sort(t,fun) table.sort(t,fun); return t end
+
+local function slice(t, go, stop, inc,       u)
+  if go   and go   < 0 then go   = #t+go end
+  if stop and stop < 0 then stop = #t+stop end
+  go   = math.max(1,  (go   or 1)//1)
+  stop = math.min(#t, (stop or #t)//1)
+  u={}; for j=go, stop, (inc or 1)//1 do u[1+#u]=t[j] end
+  return u end
 
 -- ### Math
 --
@@ -123,6 +135,9 @@ function SYM:div(      e)
   e=0; for _,n in pairs(self.has) do e=e- n/self.n * math.log(n/self.n,2) end
   return e end
 
+function SYM:like(x, prior) 
+  return ((self.has[x] or 0) + the.m*prior)/(self.n +the.m) end
+
 -- Return middle value.
 function SYM:mid() return self.mode end
 
@@ -166,6 +181,11 @@ function NUM.contrast(i,j,    a,b,c, y,n,x1,x2,r)
 
 -- Return tendency to _not_ be the middle value.
 function NUM:div() return self.sd end
+
+function NUM:like(x,...)
+  local sd, mu = self:div(), self:mid()
+  if sd==0 then return x==mu and 1 or 1E-32 end
+  return math.exp(-.5*((x - mu)/sd)^2) / (sd*((2*math.pi)^0.5)) end
 
 -- Return middle value.
 function NUM:mid() return self.mu end
@@ -219,9 +239,19 @@ function DATA:add(row)
 function DATA:clone(rows)
   return DATA:new():add(self.cols.names):load(rows) end
 
+function DATA:like(row, n, nClasses,     prior,out,v,inc)
+  prior = (#self.rows + the.k) / (n + the.k * nClasses)
+  out   = math.log(prior)
+  for _,col in pairs(self.cols.x) do
+    v = row[col.at]
+    if v ~= "?" then
+      inc = col:like(v,prior)
+      if inc > 0 then out = out + math.log(inc) end end end
+  return out end
+
 -- Load in a list of rows. Return self.
 function DATA:load(rows) 
-  for _,row in pairs(rows or {}) do self:add(row) end 
+  for _,row in pairs(rows or {}) do self:add(row) end
   return self end
 
 -- Read in a csc file full of rows. Return self.
