@@ -23,99 +23,15 @@ OPTIONS:
   -s seed     random number seed    = 1234567891
   -t train    csv data file         = ../../timm/moot/optimize/misc/auto93.csv]]
 
--- ## Lib
--- ### String to thing(s)
---
--- Simple coerce (assumes booleans, nil, ints, floats or strings)
-local function trim(s)    return s:match"^%s*(.-)%s*$" end
-local function _coerce(s) return s=="true" and true or s ~= "false" and s end
-local function coerce(s)  return math.tointeger(s) or tonumber(s) or _coerce(trim(s)) end  
+local l=require"lib"
+local fmt,new,o,push,sort = l.fmt,l.new,l.o,l.push,l.sort
+
+local function say(...) if not the.quiet then print(...) end end
+local function oo(x) say(l.o(x)) end
 
 -- Parse settings from `help` into `the`.
 help:gsub("\n[%s]+[-][%S][%s]+([%S]+)[^\n]+=[%s]+([%S]+)",   
-          function(k,v) the[k] = coerce(v) end)
-
--- Read csv, coerce cells, call `fun` on each rows.
-local function csv(sFilename,fun,      src,s,cells)
-  function cells(s,    t) 
-    t={}; for s1 in s:gmatch"([^,]+)" do t[1+#t] = coerce(s1) end; return t end  
-  src = io.input(sFilename)
-  while true do
-    s = io.read()
-    if s then fun(cells(s)) else return io.close(src) end end end
-
--- ### Lists
---
--- Push to list
-local function push(t,x) t[1+#t] = x; return x end
-
-local function map(t,fun,      u)
-  u={}; for k,v in pairs(t) do u[1+#u] = fun(v) end; return u end
-
--- Rearrange, in place
-local function shuffle(t,    j)
-  for i = #t, 2, -1 do j = math.random(i); t[i], t[j] = t[j], t[i] end
-  return t end
-
--- Sort a list, in-place
-local function sort(t,fun) table.sort(t,fun); return t end
-
-local function slice(t, go, stop, inc,       u)
-  if go   and go   < 0 then go   = #t+go end
-  if stop and stop < 0 then stop = #t+stop end
-  go   = math.max(1,  (go   or 1)//1)
-  stop = math.min(#t, (stop or #t)//1)
-  u={}; for j=go, stop, (inc or 1)//1 do u[1+#u]=t[j] end
-  return u end
-
-local function lt(x) return function(a,b) return a[x] < b[x] end end 
-local function gt(x) return function(a,b) return a[x] > b[x] end end 
-
--- Sorts `t` using the Schwartzian transform.
-local function keysort(t,fun)
-  return map(sort(map(t, function(x) return {x=x, fun=fun(x)} end), lt"fun"),
-             function(pair) return pair.x end) end 
-
--- ### Math
---
--- Sample from a Gaussian. 
-local function normal(mu,sd,      x1,x2,w)
-  while true do
-    x1 = 2.0 * math.random() - 1
-    x2 = 2.0 * math.random() - 1
-    w  = x1*x1 + x2*x2
-    if w < 1 then
-      return mu + sd * x1 * ((-2*math.log(w))/w)^0.5 end end end
-
--- ### Thing to string
---
--- Emulate printf.
-local fmt = string.format
-
--- Maybe not print
-local function say(...) if not the.quiet then print(...) end end
-
--- Nested thing to string. For things with keys,
--- do not show private slots (i.e. those starting with "_").
-local function o(x,    u)
-  if type(x) == "number" then return fmt("%g",x) end
-  if type(x) ~= "table"  then return tostring(x) end
-  u={}
-  if   #x > 0 
-  then for k,v in pairs(x) do u[1+#u] = o(v) end
-  else for k,v in pairs(x) do 
-         if o(k):sub(1,1) ~= "_" then u[1+#u] = fmt("%s=%s", k, o(v)) end end
-       table.sort(u) end
-  return "{" .. table.concat(u,", ") .. "}" end 
-
--- Print nested things.
-local function oo(x) say(o(x)) end
-
--- ### Objects
---
--- OO in two lines (sans inheritance)? Cool.
-local function new(klass,obj) 
-  klass.__index=klass; klass.__tostring=o; return setmetatable(obj,klass) end 
+          function(k,v) the[k] = l.coerce(v) end)
 
 -- ## Classes
 local DATA,COLS,SOME,ROW,SYM,NUM = {},{},{},{},{},{}
@@ -299,7 +215,7 @@ function DATA:load(rows)
 
 -- Read in a csc file full of rows. Return self.
 function DATA:read(file) 
-  csv(file, function(row) self:add(row) end) 
+  l.csv(file, function(row) self:add(row) end) 
   return self end
 
 -- Sort rows.  Return (1) self and (2) the break between best rows and rest.
@@ -318,7 +234,7 @@ function DATA:activeLearning(rows, scoreFun, slower)
   function todos(todo,     b,now,after)
     b = the.buffer
     if slower or #todo <= 4*b then return todo,{} end
-    now, after = slice(todo, 1,b), slice(todo, b*3+1)
+    now, after = l.slice(todo, 1,b), l.slice(todo, b*3+1)
     for i=b+1, 3*b do -- rotate early items to back of list
       push(i >= b*2 and now or after,   todo[i]) end
     return now, after end 
@@ -328,14 +244,14 @@ function DATA:activeLearning(rows, scoreFun, slower)
     local score = function(r) 
                     return scoreFun(best:like(r,#done,2), rest:like(r,#done,2)) end
     cut       = ((#done) ^ the.Best) // 1
-    best      = self:clone(slice(done,1,cut))
-    rest      = self:clone(slice(done,cut+1))
+    best      = self:clone(l.slice(done,1,cut))
+    rest      = self:clone(l.slice(done,cut+1))
     now,after = todos(todo)
     table.sort(now, function(row1,row2) return score(row1) > score(row2) end)  
     for _,row in pairs(after) do push(now,row) end
     return now end
 
-  todo, done = slice(rows, the.start+1), ranked(slice(rows, 1, the.start))
+  todo, done = l.slice(rows, the.start+1), ranked(l.slice(rows, 1, the.start))
   for k = 1, the.stop - the.start do
     if #todo < 4 then break end
     todo = guess(todo, done)
@@ -441,9 +357,9 @@ go.alearn = function(_,     fun,d,top,rand,start,asIs,toBe,r,rows)
 							start = os.clock()
 						  for i=1,repeats do
 			          io.stderr:write("."); io.stderr:flush()
-                rows = shuffle(d.rows)
+                rows = l.shuffle(d.rows)
 								rand:add(fun(d.cols:chebyshev(
-							 	                d:clone(slice(rows,1,the.stop)):sort().rows[1])))
+							 	                d:clone(l.slice(rows,1,the.stop)):sort().rows[1])))
 							  top=d:activeLearning(d.rows)[1] 
 								toBe:add(fun(d.cols:chebyshev(top))) end 
 							say("")
@@ -454,11 +370,10 @@ go.alearn = function(_,     fun,d,top,rand,start,asIs,toBe,r,rows)
 							end
               
 -- ## Start-up
---
 -- If loaded inside another Lua file, just return the classes. Else
 -- run any  command line entries that are also `go` functions.
 math.randomseed(the.seed)
 if   pcall(debug.getlocal,4,1) 
 then return {the=the, DATA=DATA, COLS=COLS, ROW=ROW, SYM=SYM, NUM=NUM}
 else for j,s in pairs(arg) do
-       if go[s:sub(2)] then go[s:sub(2)]( coerce(arg[j+1] or "") ) end end end 
+       if go[s:sub(2)] then go[s:sub(2)]( l.coerce(arg[j+1] or "") ) end end end 
