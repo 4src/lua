@@ -32,7 +32,7 @@ local function _coerce(s) return s=="true" and true or s ~= "false" and s end
 local function coerce(s)  return math.tointeger(s) or tonumber(s) or _coerce(trim(s)) end  
 
 -- Parse settings from `help` into `the`.
-help:gsub("\n[%s]+[-][%S][%s]+([%S]+)[^\n]+=[%s]+([%S]+)",  
+help:gsub("\n[%s]+[-][%S][%s]+([%S]+)[^\n]+=[%s]+([%S]+)",   
           function(k,v) the[k] = coerce(v) end)
 
 -- Read csv, coerce cells, call `fun` on each rows.
@@ -426,18 +426,18 @@ go.contrasts = function(_,  left,right,d,n,best,rest)
                  best,rest = d:clone(), d:clone()
                  for i,row in pairs(d.rows) do
                    (i <= n and best or rest):add(row) end
-                 print(#best.rows,#rest.rows)
+                 say(#best.rows,#rest.rows)
                  for i,col in pairs(best.cols.x) do
-                    print(col.txt, o(col:contrast(rest.cols.x[i]))) end end 
+                    say(col.txt, o(col:contrast(rest.cols.x[i]))) end end 
 
-go.alearn = function(repeats,     fun,d,top,rand,start,asIs,toBe,r,rows)
-              repeats = repeats or 20
+go.alearn = function(_,     fun,d,top,rand,start,asIs,toBe,r,rows)
+              repeats = 20
 							asIs,toBe,rand = SOME:new(), SOME:new(), SOME:new()
               d = DATA:new():read(the.train)
 							for _,row in pairs(d.rows) do
 							  asIs:add(d.cols:chebyshev(row)) end
 							r = asIs:div()*the.cohen
-							fun = function(x) return (x//r + 0.5)*r end
+							fun = function(x) return (x//r)*r end
 							start = os.clock()
 						  for i=1,repeats do
 			          io.stderr:write("."); io.stderr:flush()
@@ -446,11 +446,11 @@ go.alearn = function(repeats,     fun,d,top,rand,start,asIs,toBe,r,rows)
 							 	                d:clone(slice(rows,1,the.stop)):sort().rows[1])))
 							  top=d:activeLearning(d.rows)[1] 
 								toBe:add(fun(d.cols:chebyshev(top))) end 
-							print("")
+							say("")
 							oo{rows=#d.rows, xcols=#d.cols.x,msecs= 1000*(os.clock() - start)/repeats//1}
-							print("asIs",o{Mid=asIs:mid(), div=asIs:div(),small=r,lo=asIs:lo()})
-							print("toBe",o{Mid=toBe:mid(), div=toBe:div()})
-							print("rand",o{Mid=rand:mid(), div=rand:div()})
+							say("asIs",o{Mid=asIs:mid(), div=asIs:div(),small=r,lo=asIs:lo()})
+							say("toBe",o{Mid=toBe:mid(), div=toBe:div()})
+							say("rand",o{Mid=rand:mid(), div=rand:div()})
 							end
               
 -- ## Start-up
