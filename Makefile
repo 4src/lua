@@ -1,4 +1,4 @@
--include ../config/do.mk
+#-include ../config/do.mk
 
 DO_what=      some lua tricks
 DO_copyright= Copyright (c) 2023 Tim Menzies, BSD-2.
@@ -20,6 +20,8 @@ html:
 # 	cp arent.png ~/tmp
 # 	cp style2.css ~/tmp
 # 	pandoc --toc -c style2.css \
+	 	       --include-after=foot.md                 \
+  					--include-before=head.md              \
 # 	       --metadata title="Easeir AI"  \
 #           -s --highlight-style tango  -o $@  $^
 #
@@ -29,14 +31,22 @@ html:
 # 		 -s --mathml \
 #          --highlight-style tango \
 
+~/tmp/%.md : %.lua
+	echo '# $^' > $@
+	echo '' >> $@
+	(echo '```lua'; cat $^; echo '```') >> $@
+
 ~/tmp/%.html : %.lua 
 	cp style2.css ~/tmp
 	cp mu.png  ~/tmp
 	gawk -f lua2html.awk $< \
 	| pandoc -s -f markdown --number-sections --toc --toc-depth 5 -c style2.css \
-				--mathjax -B b4.html\
+				--mathjax \
 	       --metadata title="$<" \
-         --highlight-style tango  -o $@  
+				  --include-after=foot.md  \
+					-B head.md \
+         --indented-code-classes=lua,numberLines   \
+         --highlight-style kate  -o $@  
 
 #          -V lang=lua -o $@  ez.md
 

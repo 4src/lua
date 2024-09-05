@@ -196,7 +196,7 @@ function DATA:features(      tmp,best,rest)
 	for rank,contrast in pairs( slice( sort(tmp, gt"score"), 1, the.features )) do
 	  contrast.rank = rank
 	  out[contrast.col.at] = contrast end 
-	return out, best, rest end
+	return out, best, rest end 
 
 function DATA:like(row, n, nClasses,  col,       prior,out,v,inc) 
   prior = (#self.rows + the.k) / (n + the.k * nClasses)
@@ -269,21 +269,21 @@ local function goes(     t)
 
 -- ### Insert demos here
 go.h   = function(_) 
-            say("\n" .. help .. "\n") 
-            say("COMMANDS:\n  lua mu.lua [-"
-                  ..table.concat(goes(),',-').."]\n") end
+  say("\n" .. help .. "\n") 
+  say("COMMANDS:\n  lua mu.lua [-"
+  ..table.concat(goes(),',-').."]\n") end
 
 go.all = function(_,            fails,pass,err) 
-            fails = 0
-            for _,k in pairs(goes()) do 
-              if k ~= "all" then 
-                math.randomseed(the.seed)
-                io.stderr:write(k,"\n")
-                pass,err=pcall(go[k])
-                if   not pass 
-                then io.stderr:write("\tFAIL : ",err,"\n")
-                     fails=fails+1 end end end
-            os.exit(fails) end
+  fails = 0
+  for _,k in pairs(goes()) do 
+    if k ~= "all" then 
+      math.randomseed(the.seed)
+      io.stderr:write(k,"\n")
+      pass,err=pcall(go[k])
+      if   not pass 
+        then io.stderr:write("\tFAIL : ",err,"\n")
+  fails=fails+1 end end end
+  os.exit(fails) end
 
 go.c   = function(x) the.cohen = x end
 go.b   = function(x) the.buffer  = x end
@@ -295,11 +295,11 @@ go.t   = function(x) the.train = x end
 go.the = function(_) oo(the) end
 
 go.csv = function(_,        n) 
-            n=0
-            csv(the.train, function(row)
-                             n=n+1
-                             if n>10 then return end 
-                             oo(row) end ) end
+  n=0
+  csv(the.train, function(row)
+    n=n+1
+    if n>10 then return end 
+  oo(row) end ) end
 
 go.num = function(_, n)  
             n=NUM:new(); for i=1,100 do n:add(math.random()^.5) end   
@@ -322,20 +322,20 @@ go.data = function(_,         c,d)
             assert(c==3184 and #d.cols.x==4 and  #d.cols.y==3,"bad load") end 
 
 go.sort = function(_,   last,c,d) 
-            d = DATA:new():read(the.train):sort()
-            last = -1
-            for i,row in pairs(d.rows) do
-              c = d.cols:chebyshev(row)
-              assert(c >= last,"bad sort")  
-              last = c end end 
+  d = DATA:new():read(the.train):sort()
+  last = -1
+  for i,row in pairs(d.rows) do
+    c = d.cols:chebyshev(row)
+    assert(c >= last,"bad sort")  
+  last = c end end 
 
 go.contrast = function(_,  left,right)
-                left  = NUM:new(); for i=1,1000 do  left:add(normal(2.5, 3)) end
-                right = NUM:new(); for i=1,1000 do  right:add(normal(5, 1) ) end 
-                oo(left:contrast(right)) 
-                left  = NUM:new(); for i=1,1000 do  left:add(normal(2.5, 1)) end
-                right = NUM:new(); for i=1,1000 do  right:add(normal(5, 1) ) end 
-                oo(left:contrast(right)) end
+  left  = NUM:new(); for i=1,1000 do  left:add(normal(2.5, 3)) end
+  right = NUM:new(); for i=1,1000 do  right:add(normal(5, 1) ) end 
+  oo(left:contrast(right)) 
+  left  = NUM:new(); for i=1,1000 do  left:add(normal(2.5, 1)) end
+  right = NUM:new(); for i=1,1000 do  right:add(normal(5, 1) ) end 
+  oo(left:contrast(right)) end
 
 go.contrasts = function(_,  left,right,d,n,best,rest)
                  d,n = DATA:new():read(the.train):sort()

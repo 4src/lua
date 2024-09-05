@@ -1,12 +1,12 @@
-BEGIN                         { STOP="" }
+BEGIN {last = "-- anythin"} 
 NR < 3                        { next } 
                               { gsub(/\f/,"") }
-comment($0) && !comment(last) { printf STOP }
-!comment($0) && comment(last) { print "\n```lua"; STOP="```\n\n" }
-END                           { if(!comment(last)) print STOP }
+comment($0) && !comment(last) {  pre ="" ; }
+!comment($0) && comment(last) { print ""; pre="\t"; }
+END                           { print pre last }
                               { last = $0;
                                 sub(/^-- ?/,"")
-                                print $0
+                                print pre $0
                               }
 
 function comment(s) { return s ~ /^-- ?/ }
